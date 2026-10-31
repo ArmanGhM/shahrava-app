@@ -1,0 +1,1624 @@
+<!doctype html>
+<html lang="fa" dir="rtl" class="scroll-smooth dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>شهرآوا | کاوشگر هوشمند شهرهای جهان</title>
+    <meta
+      name="description"
+      content="شهرآوا (SHAHRAVA) - پلتفرمی برای کاوش دیداری، جغرافیایی و آماری شهرهای جهان با هویت بصری پویا، نمودارهای تعاملی و اطلاعات آب‌وهوا و نقشه."
+    />
+    <meta
+      property="og:title"
+      content="Shahrava - Global City Exploration | شهرآوا"
+    />
+    <meta
+      property="og:description"
+      content="پلتفرمی برای کاوش شهرهای جهان با هویت بصری پویا، نمودارهای اقلیمی و نقشه جغرافیایی تعاملی."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="fa_IR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#060913" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="application-name" content="SHAHRAVA" />
+    <meta name="author" content="SHAHRAVA" />
+    <meta name="robots" content="index, follow" />
+
+    <!-- BUG 9 fix: Inline FOUC script before CSS execution -->
+    <script>
+      try {
+        const dark = localStorage.getItem("shahrava_dark_mode") !== "false";
+        if (!dark) {
+          document.documentElement.classList.remove("dark");
+          document.documentElement.classList.add("light");
+        } else {
+          document.documentElement.classList.add("dark");
+          document.documentElement.classList.remove("light");
+        }
+      } catch (e) {}
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lalezar&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Sora:wght@600;700;800&family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Shahrava (شهرآوا)",
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "All",
+        "description": "A frontend platform for visual, geographic, and statistical exploration of cities around the world.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+    <link rel="stylesheet" href="/src/index.css" />
+  </head>
+
+  <body class="obsidian-base min-h-screen relative">
+    <a class="shahrava-skip-link" href="#hero-section" data-en="Skip to main content">رفتن به محتوای اصلی</a>
+
+    <!-- Living atmosphere -->
+    <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
+    <canvas id="sky" aria-hidden="true"></canvas>
+    <div class="city-pattern-layer fixed inset-0 pointer-events-none z-0"></div>
+    <div id="scroll-progress" aria-hidden="true"></div>
+
+    <div class="relative z-10 flex flex-col min-h-screen">
+      <!-- ================= HEADER ================= -->
+      <header
+        id="site-header"
+        class="site-header sticky top-0 z-40 px-2 sm:px-4 pt-2 sm:pt-3"
+      >
+        <div
+          class="site-header__bar max-w-7xl mx-auto flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 sm:gap-3"
+        >
+          <a href="#city=tehran" class="brand">
+            <span class="brand-mark">
+              <svg
+                class="w-5 h-5 sm:w-6 sm:h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2.5"
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                />
+              </svg>
+            </span>
+            <span>
+              <span class="flex items-center gap-2">
+                <span id="brand-name-text" class="brand-name">شهرآوا</span>
+                <span id="brand-badge-text" class="brand-badge hidden sm:inline" data-en="Global Edition"
+                  >نسخه بین‌المللی</span
+                >
+              </span>
+              <p
+                id="brand-tagline-text"
+                class="text-[11px] t-muted hidden 2xl:block"
+                data-en="Global Smart City Exploration & Dynamic Visual Identity Platform"
+              >
+                کاوش هوشمند و هویت بصری شهرهای جهان
+              </p>
+            </span>
+          </a>
+
+          <div
+            class="order-2 sm:order-3 flex items-center gap-1 sm:gap-2 shrink-0"
+          >
+            <button
+              id="sound-toggle-btn"
+              type="button"
+              class="icon-btn hidden md:inline-flex"
+              title="اتمسفر صوتی شهر"
+              aria-label="اتمسفر صوتی"
+            >
+              <svg
+                id="sound-wave-icon"
+                class="w-4 h-4 text-[var(--city-primary)]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                />
+              </svg>
+              <span id="sound-btn-text" data-en="Audio Atmosphere">اتمسفر صوتی</span>
+            </button>
+            <button
+              id="open-favorites-drawer-btn"
+              type="button"
+              class="icon-btn"
+              title="شهرهای نشان‌شده"
+              aria-label="شهرهای نشان‌شده"
+            >
+              <svg
+                class="w-4 h-4 text-rose-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+              <span id="nav-favs-btn-text" class="hidden md:inline" data-en="Favorites"
+                >علاقه‌مندی‌ها</span
+              >
+            </button>
+            <button
+              id="nav-compare-btn"
+              type="button"
+              class="icon-btn"
+              title="میز مقایسه شهرها"
+              aria-label="میز مقایسه شهرها"
+            >
+              <svg
+                class="w-4 h-4 text-amber-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                />
+              </svg>
+              <span id="nav-compare-btn-text" class="hidden md:inline" data-en="Compare"
+                >مقایسه</span
+              >
+            </button>
+            <button
+              id="theme-mode-btn"
+              type="button"
+              class="icon-btn"
+              title="تغییر حالت شب و روز"
+              aria-label="تغییر حالت شب و روز"
+            >
+              <svg
+                id="theme-mode-icon"
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                />
+              </svg>
+            </button>
+            <button
+              id="lang-toggle-btn"
+              type="button"
+              class="icon-btn icon-btn--solid"
+              title="Switch Language / تغییر زبان"
+              aria-label="تغییر زبان"
+            >
+              <span id="lang-toggle-btn-text">English</span>
+            </button>
+          </div>
+
+          <div
+            class="order-3 sm:order-2 w-full sm:w-auto sm:flex-1 sm:max-w-md relative"
+          >
+            <div class="relative flex items-center">
+              <input
+                id="global-city-search-input"
+                type="text"
+                autocomplete="off"
+                placeholder="جستجوی هر شهر یا کشور در جهان..."
+                class="text-xs sm:text-sm"
+                aria-label="جستجوی شهر یا کشور"
+              />
+              <div
+                class="absolute t-muted pointer-events-none"
+                style="inset-inline-start: 1rem"
+              >
+                <svg
+                  class="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+              </div>
+              <kbd
+                class="absolute hidden md:block text-[10px] font-mono t-muted px-1.5 py-0.5 rounded border border-[var(--city-border)]"
+                style="inset-inline-end: 0.9rem"
+                >Ctrl+K</kbd
+              >
+            </div>
+            <div
+              id="search-results-dropdown"
+              class="hidden absolute top-full left-0 right-0 mt-2 rounded-2xl border overflow-hidden z-50"
+            ></div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ================= HERO ================= -->
+      <section
+        id="hero-section"
+        class="relative overflow-hidden pt-12 pb-16 lg:pt-20 lg:pb-24"
+      >
+        <div class="absolute inset-0 z-0">
+          <!-- Guaranteed image: starts with inline SVG data URI -->
+          <img
+            id="hero-backdrop-image"
+            src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 900' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2316C6B1'/%3E%3Cstop offset='0.55' stop-color='%23D6B66D'/%3E%3Cstop offset='1' stop-color='%2316C6B1'/%3E%3C/linearGradient%3E%3CradialGradient id='v' cx='50%25' cy='35%25' r='75%25'%3E%3Cstop offset='0' stop-color='rgba(255,255,255,0.2)'/%3E%3Cstop offset='1' stop-color='rgba(0,0,0,0.55)'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3Crect width='100%25' height='100%25' fill='url(%23v)'/%3E%3C/svg%3E"
+            alt="Tehran"
+            class="w-full h-full object-cover object-center"
+          />
+          <div class="absolute inset-0 obsidian-spotlight"></div>
+          <div class="hero-orb hero-orb--a"></div>
+          <div class="hero-orb hero-orb--b"></div>
+          <div
+            class="absolute inset-0"
+            style="background: var(--city-hero-gradient)"
+          ></div>
+          <div
+            class="absolute inset-0"
+            style="
+              background: linear-gradient(
+                to top,
+                var(--city-bg),
+                transparent 60%
+              );
+            "
+          ></div>
+        </div>
+
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            <div class="lg:col-span-8 space-y-7">
+              <div class="flex flex-wrap items-center gap-3">
+                <span id="hero-city-country" class="chip chip--brand"
+                  ><span
+                    class="live-dot"
+                    style="background: var(--sh-on-brand)"
+                  ></span
+                  >ایران</span
+                >
+                <div class="chip">
+                  <svg
+                    class="w-3.5 h-3.5 text-emerald-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  <span id="hero-local-time-label" data-en="Local Time:">زمان محلی:</span>
+                  <span
+                    id="hero-local-time-clock"
+                    class="font-mono font-bold t-main"
+                    >--:--:--</span
+                  >
+                </div>
+                <div class="chip">
+                  <span
+                    id="hero-weather-temp"
+                    class="font-bold text-[var(--city-secondary)]"
+                    >--°</span
+                  >
+                  <span class="t-muted">|</span>
+                  <span id="hero-weather-desc" class="line-clamp-1" data-en="Connecting..."
+                    >در حال اتصال...</span
+                  >
+                </div>
+              </div>
+
+              <div>
+                <h1 id="hero-city-title" class="mb-4">تهران</h1>
+                <p
+                  id="hero-city-tagline"
+                  class="text-lg sm:text-2xl font-medium leading-relaxed max-w-2xl t-soft"
+                >
+                  کلان‌شهر هزاررنگ در دامنه البرز سپیدپوش و پایتخت دویست‌ساله
+                  ایران
+                </p>
+                <div class="flex items-center gap-2 text-xs t-muted mt-3">
+                  <span
+                    class="w-2 h-2 rounded-full"
+                    style="
+                      background: var(--city-secondary);
+                      box-shadow: 0 0 10px var(--city-secondary);
+                    "
+                  ></span>
+                  <p id="city-motif-description" class="line-clamp-1">
+                    نقوش هندسی گره‌چینی ایرانی و شکوه قله‌های سپیدپوش البرز
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-3 pt-2">
+                <button
+                  id="surprise-me-btn"
+                  type="button"
+                  class="btn-hero btn-hero--solid"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2.5"
+                      d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+                    />
+                  </svg>
+                  <span id="surprise-me-btn-text" data-en="Surprise Me"
+                    >یک شهر شگفت‌انگیز پیشنهاد کن</span
+                  >
+                </button>
+                <button id="hero-favorite-btn" type="button" class="btn-hero">
+                  <svg
+                    id="hero-favorite-icon"
+                    class="w-4 h-4 text-rose-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                    />
+                  </svg>
+                  <span id="hero-favorite-text" data-en="Add to Favorites">نشان کردن</span>
+                </button>
+                <button id="hero-compare-btn" type="button" class="btn-hero">
+                  <svg
+                    class="w-4 h-4 text-amber-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                  <span id="hero-compare-btn-text" data-en="Add to Compare">افزودن به مقایسه</span>
+                </button>
+              </div>
+            </div>
+
+            <div
+              class="lg:col-span-4 flex flex-col items-center justify-center"
+            >
+              <div class="globe-stage" aria-hidden="false">
+                <span class="orbit orbit--1" aria-hidden="true"></span
+                ><span class="orbit orbit--2" aria-hidden="true"></span
+                ><span class="orbit orbit--3" aria-hidden="true"></span>
+                <div
+                  class="obsidian-card obsidian-glow-rim rounded-3xl p-6 w-full max-w-sm flex flex-col items-center animate-float"
+                >
+                  <div
+                    class="w-full flex items-center justify-between mb-3 text-xs t-soft"
+                  >
+                    <span
+                      id="globe-viz-title"
+                      class="font-bold flex items-center gap-2"
+                      data-en="Planetary Position on Globe"
+                    >
+                      <span class="live-dot"></span>موقعیت سیاره‌ای در کره زمین
+                    </span>
+                    <span class="tech-tag">D3 Orthographic</span>
+                  </div>
+                  <div
+                    id="globe-viz-container"
+                    role="img"
+                    aria-label="کره تعاملی و موقعیت جغرافیایی شهرها"
+                    class="w-60 h-60 relative flex items-center justify-center my-1"
+                  ></div>
+                  <p
+                    id="globe-viz-subtitle"
+                    class="text-[11px] t-muted text-center mt-2"
+                    data-en="3D D3 Orthographic Projection — drag to rotate"
+                  >
+                    تجسم کروی سه‌بعدی D3 Orthographic — برای چرخاندن کره بکشید
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Glass stat strip -->
+          <div class="obsidian-card obsidian-glow-rim stat-strip mt-12">
+            <div class="stat">
+              <span id="stat-label-pop" data-en="Total Population">جمعیت کل</span
+              ><strong id="stat-population-val">--</strong>
+            </div>
+            <div class="stat">
+              <span id="stat-label-elev" data-en="Elevation">ارتفاع از دریا</span
+              ><strong id="stat-elevation-val">--</strong>
+            </div>
+            <div class="stat">
+              <span id="stat-label-area" data-en="Urban Area">مساحت شهری</span
+              ><strong id="stat-area-val">--</strong>
+            </div>
+            <div class="stat">
+              <span id="stat-label-dens" data-en="Density">تراکم جمعیت</span
+              ><strong id="stat-density-val">--</strong>
+            </div>
+            <div class="stat col-span-2 sm:col-span-1">
+              <span id="stat-label-coords" data-en="Coordinates">مختصات جغرافیایی</span
+              ><strong id="stat-coords-val" class="truncate">--</strong>
+            </div>
+          </div>
+
+          <div class="flex justify-center mt-10" aria-hidden="true">
+            <div class="scroll-cue"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Ribbon -->
+      <div class="ribbon" aria-label="Features">
+        <div class="ribbon__track">
+          <span class="ribbon__item" data-en="Live weather">آب‌وهوای زنده</span
+          ><span class="ribbon__item" data-en="Interactive map"
+            >نقشهٔ تعاملی</span
+          ><span class="ribbon__item" data-en="City comparison"
+            >مقایسهٔ شهرها</span
+          ><span class="ribbon__item" data-en="Population charts"
+            >نمودار جمعیت</span
+          ><span class="ribbon__item" data-en="Sights & museums"
+            >دیدنی‌ها و موزه‌ها</span
+          ><span class="ribbon__item" data-en="Sound atmosphere"
+            >اتمسفر صوتی</span
+          ><span class="ribbon__item" data-en="Day & night">حالت شب و روز</span
+          ><span class="ribbon__item" data-en="Persian & English"
+            >فارسی و انگلیسی</span
+          ><span class="contents" aria-hidden="true"
+            ><span class="ribbon__item" data-en="Live weather"
+              >آب‌وهوای زنده</span
+            ><span class="ribbon__item" data-en="Interactive map"
+              >نقشهٔ تعاملی</span
+            ><span class="ribbon__item" data-en="City comparison"
+              >مقایسهٔ شهرها</span
+            ><span class="ribbon__item" data-en="Population charts"
+              >نمودار جمعیت</span
+            ><span class="ribbon__item" data-en="Sights & museums"
+              >دیدنی‌ها و موزه‌ها</span
+            ><span class="ribbon__item" data-en="Sound atmosphere"
+              >اتمسفر صوتی</span
+            ><span class="ribbon__item" data-en="Day & night"
+              >حالت شب و روز</span
+            ><span class="ribbon__item" data-en="Persian & English"
+              >فارسی و انگلیسی</span
+            ></span
+          >
+        </div>
+      </div>
+
+      <!-- ================= OVERVIEW ================= -->
+      <section class="py-16 obsidian-section-surface">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div
+              class="lg:col-span-8 obsidian-card obsidian-glow-rim p-6 sm:p-8 rounded-3xl space-y-4"
+            >
+              <div
+                class="flex items-center justify-between pb-4 border-b border-[var(--city-border)]"
+              >
+                <h3 class="font-bold text-lg flex items-center gap-2">
+                  <svg
+                    class="w-5 h-5 text-[var(--city-primary)]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                    />
+                  </svg>
+                  <span data-en="Encyclopedia & City Overview">دانشنامه، پیشینه و معرفی شهر</span>
+                </h3>
+                <span class="text-xs t-muted" data-en="Via Wikimedia REST API"
+                  >برگرفته از Wikimedia REST API</span
+                >
+              </div>
+              <p
+                id="city-encyclopedic-text"
+                class="t-soft leading-loose text-sm sm:text-base"
+                data-en="Loading encyclopedic summary..."
+              >
+                در حال بارگذاری چکیده دانشنامه‌ای...
+              </p>
+              <a
+                id="wiki-attribution-link"
+                href="#"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="hidden inline-flex items-center gap-1.5 text-xs text-[var(--city-primary)] hover:underline font-bold"
+              >
+                <span data-en="Read full article on Wikipedia">مطالعه مقاله کامل در ویکی‌پدیا</span><span>←</span>
+              </a>
+            </div>
+
+            <div
+              class="lg:col-span-4 obsidian-card obsidian-glow-rim p-6 sm:p-8 rounded-3xl"
+            >
+              <h3
+                class="font-bold text-lg flex items-center gap-2 pb-4 border-b border-[var(--city-border)]"
+              >
+                <!-- Emoji flag span (zero network requests) -->
+                <span
+                  id="country-flag-icon"
+                  class="hidden text-xl leading-none"
+                  role="img"
+                  aria-label="Flag"
+                ></span>
+                <span id="country-profile-title" data-en="Country Profile">اطلاعات کشور متبوع</span>
+              </h3>
+              <div class="mt-2">
+                <div class="kv">
+                  <span id="country-capital-label" data-en="Capital:">پایتخت:</span
+                  ><span id="country-capital-val">--</span>
+                </div>
+                <div class="kv">
+                  <span id="country-currency-label" data-en="Currency:">واحد پول:</span
+                  ><span id="country-currency-val">--</span>
+                </div>
+                <div class="kv">
+                  <span id="country-region-label" data-en="Region:">منطقه جغرافیایی:</span
+                  ><span id="country-region-val">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= FEATURES (BENTO) ================= -->
+      <section id="explore-section" class="py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div class="sh-head">
+            <div>
+              <h2 class="sh-h2" data-en="Everything you need to know a city">
+                هر آنچه برای شناخت یک شهر لازم است
+              </h2>
+              <p
+                class="sh-sub"
+                data-en="Pick a door. Each one opens a live view of the city."
+              >
+                یک در را انتخاب کن؛ هر کدام نمایی زنده از شهر را باز می‌کند.
+              </p>
+            </div>
+          </div>
+          <div class="bento">
+            <a
+              href="#map-section"
+              class="bento-tile bento-map obsidian-card obsidian-glow-rim"
+            >
+              <div class="art art-map" aria-hidden="true">
+                <b class="pin" style="--x: 22%; --y: 30%"></b
+                ><b class="pin" style="--x: 58%; --y: 52%; --d: -0.8s"></b
+                ><b class="pin" style="--x: 78%; --y: 24%; --d: -1.6s"></b>
+              </div>
+              <span class="bento-icon"
+                ><svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.2"
+                    d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                  /></svg
+              ></span>
+              <h3 data-en="Interactive map">نقشهٔ تعاملی</h3>
+              <p
+                data-en="See sights, landmarks and museums on the map and filter them by category."
+              >
+                دیدنی‌ها، آثار تاریخی و موزه‌ها را روی نقشه ببین و بر اساس دسته
+                فیلتر کن.
+              </p>
+              <span class="bento-go" data-en="Open the map">باز کردن نقشه</span>
+            </a>
+            <a href="#weather-section" class="bento-tile obsidian-card">
+              <div class="art art-sun" aria-hidden="true"></div>
+              <span class="bento-icon"
+                ><svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.2"
+                    d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
+                  /></svg
+              ></span>
+              <h3 data-en="Live weather">آب‌وهوای زنده</h3>
+              <p data-en="Right now, next 24 hours and the week ahead.">
+                همین حالا، ۲۴ ساعت آینده و هفتهٔ پیش‌رو.
+              </p>
+            </a>
+            <a href="#data-section" class="bento-tile obsidian-card">
+              <div class="art art-bars" aria-hidden="true">
+                <i style="--h: 40%; --i: 0"></i><i style="--h: 75%; --i: 1"></i
+                ><i style="--h: 55%; --i: 2"></i
+                ><i style="--h: 100%; --i: 3"></i
+                ><i style="--h: 65%; --i: 4"></i>
+              </div>
+              <span class="bento-icon"
+                ><svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.2"
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  /></svg
+              ></span>
+              <h3 data-en="Charts">نمودارها</h3>
+              <p data-en="Climate cycle and 70 years of population growth.">
+                چرخهٔ اقلیمی و رشد جمعیت در ۷۰ سال گذشته.
+              </p>
+            </a>
+            <button
+              type="button"
+              data-proxy="nav-compare-btn"
+              class="bento-tile bento-compare obsidian-card obsidian-glow-rim"
+            >
+              <div class="art art-venn" aria-hidden="true"><i></i><i></i></div>
+              <span class="bento-icon"
+                ><svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.2"
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                  /></svg
+              ></span>
+              <h3 data-en="Compare two cities">مقایسهٔ دو شهر</h3>
+              <p
+                data-en="Radar chart and a side-by-side table of climate, size and density."
+              >
+                نمودار رادار و جدول کنار هم برای اقلیم، وسعت و تراکم.
+              </p>
+              <span class="bento-go" data-en="Open the compare desk"
+                >باز کردن میز مقایسه</span
+              >
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= WEATHER ================= -->
+      <section id="weather-section" class="py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div class="sh-head">
+            <div>
+              <h2 id="weather-section-title" class="sh-h2" data-en="Atmospheric Conditions & Open-Meteo Forecast">
+                وضعیت جوی و پیش‌بینی Open-Meteo
+              </h2>
+              <p class="sh-sub" data-en="Real satellite observation & numerical meteorological modeling">
+                اطلاعات زنده ماهواره‌ای و مدلسازی‌های عددی هواشناسی
+              </p>
+            </div>
+            <span
+              id="weather-live-badge"
+              class="chip text-[var(--city-primary)]"
+              style="border-color: var(--city-border-active)"
+              data-en="Live Open-Meteo Satellite Data"
+            >
+              <span class="live-dot"></span>داده‌های زنده ماهواره‌ای Open-Meteo
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            <div
+              class="lg:col-span-4 obsidian-card obsidian-glow-rim p-7 rounded-3xl flex flex-col justify-between relative overflow-hidden"
+            >
+              <div
+                class="absolute inset-0 z-0 overflow-hidden pointer-events-none"
+              >
+                <!-- SVG gradient placeholder -->
+                <img
+                  id="weather-ambient-bg"
+                  src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 600' preserveAspectRatio='xMidYMid slice'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%231e3a5f'/%3E%3Cstop offset='1' stop-color='%23060913'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)'/%3E%3C/svg%3E"
+                  alt="Weather atmosphere"
+                  class="weather-ambient-backdrop w-full h-full object-cover transition-all duration-1000 opacity-60"
+                />
+                <div
+                  class="absolute inset-0"
+                  style="
+                    background: linear-gradient(
+                      to top,
+                      var(--city-surface),
+                      color-mix(in srgb, var(--city-surface) 70%, transparent),
+                      transparent
+                    );
+                  "
+                ></div>
+              </div>
+              <div class="relative z-10">
+                <span class="text-xs t-muted font-medium" data-en="Current Temperature">دمای کنونی</span>
+                <div class="flex items-baseline gap-3 my-4">
+                  <span
+                    id="weather-section-current-temp"
+                    class="text-6xl sm:text-7xl font-black tracking-tight t-main"
+                    >--°</span
+                  >
+                  <span
+                    id="weather-section-condition"
+                    class="text-sm font-bold text-[var(--city-primary)]"
+                    data-en="Loading..."
+                    >در حال دریافت...</span
+                  >
+                </div>
+              </div>
+              <div
+                class="relative z-10 grid grid-cols-2 gap-3 pt-5 border-t border-[var(--city-border)] text-xs"
+              >
+                <div class="tile">
+                  <span data-en="Feels Like">دمای احساسی</span
+                  ><strong id="weather-stat-feels-like">--°</strong>
+                </div>
+                <div class="tile">
+                  <span data-en="Relative Humidity">رطوبت نسبی</span
+                  ><strong id="weather-stat-humidity">--٪</strong>
+                </div>
+                <div class="tile">
+                  <span data-en="Wind Speed">سرعت باد</span
+                  ><strong id="weather-stat-wind">--</strong>
+                </div>
+                <div class="tile">
+                  <span data-en="UV Index">شاخص فرابنفش (UV)</span
+                  ><strong id="weather-stat-uv">--</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="lg:col-span-8 obsidian-card p-7 rounded-3xl space-y-6">
+              <div>
+                <h4
+                  class="text-xs font-bold t-soft mb-3 flex items-center gap-2"
+                >
+                  <span
+                    class="w-1.5 h-1.5 rounded-full"
+                    style="background: var(--city-primary)"
+                  ></span
+                  ><span data-en="24-Hour Forecast (every 2h)">پیش‌بینی ۲۴ ساعت آینده (هر ۲ ساعت)</span>
+                </h4>
+                <div
+                  id="weather-hourly-strip"
+                  class="flex gap-3 overflow-x-auto pb-2"
+                ></div>
+              </div>
+              <div>
+                <h4
+                  class="text-xs font-bold t-soft mb-3 flex items-center gap-2"
+                >
+                  <span
+                    class="w-1.5 h-1.5 rounded-full"
+                    style="background: var(--city-secondary)"
+                  ></span
+                  ><span data-en="Upcoming Days">پیش‌بینی روزهای آینده</span>
+                </h4>
+                <div id="weather-daily-forecast" class="space-y-2"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= D3 DATA ================= -->
+      <section id="data-section" class="py-16 obsidian-section-surface">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div class="sh-head">
+            <div>
+              <h2 class="sh-h2" data-en="City Data Visualization Engine (D3.js)">موتور مصورسازی داده‌های شهری (D3.js)</h2>
+              <p class="sh-sub" data-en="Visual analytics of climate, historical growth, and development indicators">
+                تحلیل‌های دیداری پیشرفته اقلیم، رشد تاریخی و شاخص‌های توسعه
+              </p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div
+              class="obsidian-card obsidian-glow-rim p-6 sm:p-8 rounded-3xl space-y-4"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 id="climate-chart-title" class="font-bold text-base" data-en="Annual Climate Cycle & Precipitation Pattern">
+                    چرخه اقلیمی و الگوی بارش سالانه
+                  </h3>
+                  <p id="climate-chart-subtitle" class="text-xs t-muted" data-en="Monthly high/low temperatures and precipitation volume">
+                    بیشینه/کمینه دما و بارش ماهانه
+                  </p>
+                </div>
+                <span class="tech-tag">D3 Area + Bar</span>
+              </div>
+              <div
+                id="climate-chart-container"
+                role="img"
+                aria-label="نمودار اقلیم و آب‌وهوای شهر"
+                class="w-full h-72 relative"
+              ></div>
+            </div>
+            <div
+              class="obsidian-card obsidian-glow-rim p-6 sm:p-8 rounded-3xl space-y-4"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 id="pop-chart-title" class="font-bold text-base" data-en="Historical Population Trajectory & Growth">
+                    روند تحول و رشد جمعیت تاریخی
+                  </h3>
+                  <p id="pop-chart-subtitle" class="text-xs t-muted" data-en="Census historical metrics from 1950 to present">
+                    آمار تاریخی سرشماری از ۱۹۵۰ تا کنون
+                  </p>
+                </div>
+                <span
+                  class="tech-tag"
+                  style="
+                    color: var(--city-secondary);
+                    border-color: color-mix(
+                      in srgb,
+                      var(--city-secondary) 40%,
+                      transparent
+                    );
+                  "
+                  >D3 Spline Area</span
+                >
+              </div>
+              <div
+                id="population-chart-container"
+                role="img"
+                aria-label="نمودار جمعیت شهر"
+                class="w-full h-72 relative"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= MAP & ATTRACTIONS ================= -->
+      <section id="map-section" class="py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div class="sh-head">
+            <div>
+              <h2 id="attractions-section-title" class="sh-h2" data-en="Signature Landmarks, Heritage & Urban Wonders">
+                دیدنی‌ها، آثار شاخص و گنجینه‌های شهری
+              </h2>
+              <p id="attractions-section-subtitle" class="sh-sub" data-en="Historical, cultural, and architectural highlights located on the map">
+                نقاط برجسته تاریخی، فرهنگی و معماری شهر بر روی نقشه ماهواره‌ای
+              </p>
+            </div>
+          </div>
+
+          <!-- Advanced filter toolbar (search + sort + pills + count + reset) -->
+          <div class="attractions-toolbar">
+            <div class="attractions-toolbar__row">
+              <div class="attractions-search">
+                <svg
+                  class="attractions-search__icon"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <input
+                  id="attraction-search-input"
+                  type="search"
+                  autocomplete="off"
+                  placeholder="جستجو در جاذبه‌ها..."
+                  class="attractions-search__input"
+                  aria-label="جستجو در جاذبه‌ها"
+                />
+                <button
+                  id="attraction-search-clear"
+                  type="button"
+                  class="attractions-search__clear hidden"
+                  aria-label="پاک کردن جستجو"
+                >
+                  ×
+                </button>
+              </div>
+
+              <select id="attraction-sort-select" class="attractions-sort" aria-label="مرتب‌سازی جاذبه‌ها">
+                <option value="default" data-en="Sort: Default">
+                  مرتب‌سازی: پیش‌فرض
+                </option>
+                <option value="name-asc" data-en="Name A→Z">نام (الف→ی)</option>
+                <option value="name-desc" data-en="Name Z→A">
+                  نام (ی→الف)
+                </option>
+                <option value="category" data-en="By Category">
+                  بر اساس دسته
+                </option>
+              </select>
+            </div>
+
+            <div id="attraction-category-pills" class="attractions-pills"></div>
+
+            <div class="attractions-status">
+              <span id="attraction-result-count" class="attractions-count"
+                >—</span
+              >
+              <button
+                id="attraction-reset-btn"
+                type="button"
+                class="attractions-reset hidden"
+              >
+                <svg
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  width="12"
+                  height="12"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+                <span data-en="Clear filters">پاک کردن فیلترها</span>
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="obsidian-card obsidian-map-frame rounded-3xl overflow-hidden relative"
+          >
+            <div
+              id="interactive-city-map"
+              class="w-full h-96 sm:h-[480px] z-10"
+            ></div>
+          </div>
+          <div
+            id="attractions-cards-grid"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+          ></div>
+        </div>
+      </section>
+
+      <!-- ================= FEATURED CITIES ================= -->
+      <section id="featured-section" class="py-16 obsidian-section-surface">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div class="sh-head">
+            <div>
+              <h2 id="nav-link-featured" class="sh-h2" data-en="Featured Global Cities">شهرهای برگزیده جهان</h2>
+              <p class="sh-sub" data-en="Clicking any city dynamically re-skins the entire visual identity, climate, and charts">
+                با کلیک روی هر شهر، تمام هویت بصری، اقلیم و نمودارهای پلتفرم
+                دگرگون می‌شود
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button
+                data-continent="all"
+                class="continent-filter-pill active-filter"
+                data-en="All Continents"
+              >
+                همه قاره‌ها
+              </button>
+              <button data-continent="middleEast" class="continent-filter-pill" data-en="Middle East">
+                خاورمیانه
+              </button>
+              <button data-continent="asia" class="continent-filter-pill" data-en="Asia">
+                آسیا
+              </button>
+              <button data-continent="europe" class="continent-filter-pill" data-en="Europe">
+                اروپا
+              </button>
+              <button data-continent="americas" class="continent-filter-pill" data-en="Americas">
+                آمریکا
+              </button>
+            </div>
+          </div>
+          <div
+            id="featured-cities-grid"
+            class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          ></div>
+        </div>
+      </section>
+
+      <!-- ================= FOOTER ================= -->
+      <footer class="site-footer mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="footer-cta">
+            <div>
+              <h3 data-en="Not sure where to go next?">
+                مقصد بعدی‌ات را نمی‌دانی؟
+              </h3>
+              <p
+                data-en="Let Shahrava pick a city for you — its colours, climate and map change with it."
+              >
+                بگذار شهرآوا یک شهر برایت انتخاب کند؛ رنگ، اقلیم و نقشه‌ی سایت
+                همراهش عوض می‌شود.
+              </p>
+            </div>
+            <button type="button" class="btn-hero" data-proxy="surprise-me-btn">
+              <span data-en="Surprise me">شهر تصادفی نشانم بده</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-12 gap-10 pt-14">
+            <div class="col-span-2 md:col-span-6">
+              <div class="flex items-center gap-3 mb-3">
+                <span class="brand-mark !w-9 !h-9 !rounded-xl">
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2.5"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                    />
+                  </svg>
+                </span>
+                <h4 id="footer-about-title" class="font-black text-lg" data-en="About SHAHRAVA">
+                  شهرآوا (SHAHRAVA)
+                </h4>
+              </div>
+              <p
+                id="footer-about-text"
+                class="text-xs t-muted max-w-xl leading-loose"
+                data-en="SHAHRAVA is an advanced independent frontend platform for visual, geographic, and statistical exploration of cities around the world, blending dynamic visual identity engines, luxury obsidian architecture, and live data."
+              >
+                شهرآوا یک پلتفرم پیشرو و مستقل فرانت‌اند برای کاوش دیداری،
+                جغرافیایی و آماری شهرهای جهان است که با تلفیق موتور هویت بصری
+                پویا، معماری آبسیدین لوکس، مصورسازی داده‌های D3.js و
+                وب‌سرویس‌های برخط جهانی طراحی شده است.
+              </p>
+            </div>
+            <div class="md:col-span-3">
+              <h5 class="footer-title" data-en="Explore">کاوش</h5>
+              <a class="footer-link" href="#hero-section" data-en="Overview"
+                >نمای کلی</a
+              >
+              <a
+                class="footer-link"
+                href="#weather-section"
+                data-en="Live weather"
+                >آب‌وهوای زنده</a
+              >
+              <a class="footer-link" href="#data-section" data-en="Data charts"
+                >نمودارهای داده</a
+              >
+              <a
+                class="footer-link"
+                href="#map-section"
+                data-en="Map & attractions"
+                >نقشه و دیدنی‌ها</a
+              >
+              <a
+                class="footer-link"
+                href="#featured-section"
+                data-en="Featured cities"
+                >شهرهای برگزیده</a
+              >
+            </div>
+            <div class="md:col-span-3">
+              <h5 class="footer-title" data-en="Tools">ابزارها</h5>
+              <button
+                type="button"
+                class="footer-link"
+                data-proxy="open-favorites-drawer-btn"
+                data-en="My favourites"
+              >
+                علاقه‌مندی‌های من
+              </button>
+              <button
+                type="button"
+                class="footer-link"
+                data-proxy="nav-compare-btn"
+                data-en="Compare cities"
+              >
+                مقایسه شهرها
+              </button>
+              <button
+                type="button"
+                class="footer-link"
+                data-proxy="theme-mode-btn"
+                data-en="Day / night"
+              >
+                حالت شب و روز
+              </button>
+              <button
+                type="button"
+                class="footer-link"
+                data-proxy="lang-toggle-btn"
+                data-en="فارسی / English"
+              >
+                فارسی / English
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="flex flex-col md:flex-row md:items-center justify-between gap-2 mt-12 pt-6 border-t border-[var(--city-border)] text-xs"
+          >
+            <span id="footer-api-credits" class="t-muted" data-en="Powered by Open-Meteo, OpenStreetMap, Nominatim, Wikimedia and REST Countries"
+              >داده‌های معتبر از Open-Meteo, OpenStreetMap, Nominatim, Wikimedia
+              و REST Countries</span
+            >
+            <span id="footer-rights-text" class="t-muted" data-en="All rights reserved — SHAHRAVA Project 2026"
+              >تمامی حقوق متعلق به پروژه شهرآوا است — ۲۰۲۶</span
+            >
+          </div>
+        </div>
+        <div class="footer-wordmark" aria-hidden="true">SHAHRAVA</div>
+      </footer>
+    </div>
+
+    <button
+      id="back-to-top"
+      type="button"
+      class="to-top"
+      aria-label="Back to top"
+    >
+      <svg class="ring" viewBox="0 0 48 48">
+        <circle class="trk" cx="24" cy="24" r="20" />
+        <circle class="bar" cx="24" cy="24" r="20" />
+      </svg>
+      <svg
+        class="w-4 h-4"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2.5"
+          d="M5 15l7-7 7 7"
+        />
+      </svg>
+    </button>
+
+    <!-- ================= COMPARISON MODAL ================= -->
+    <div
+      id="comparison-modal"
+      class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-2xl overflow-y-auto"
+    >
+      <div class="obsidian-elevated w-full max-w-4xl p-6 sm:p-8 my-8 space-y-6">
+        <div
+          class="flex items-center justify-between pb-4 border-b border-[var(--city-border)]"
+        >
+          <div>
+            <h3 class="font-black text-xl" data-en="Global City Comparison">میز مقایسه هوشمند شهرهای جهان</h3>
+            <p class="text-xs t-muted mt-1" data-en="Multi-dimensional analysis with D3.js radar and quantitative metrics table">
+              سنجش چندبُعدی با رادار D3.js و جدول داده‌های کمی
+            </p>
+          </div>
+          <button
+            id="close-comparison-modal"
+            type="button"
+            class="icon-btn"
+            aria-label="Close"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+        <div
+          id="comparison-split-preview"
+          class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 relative"
+        ></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label for="compare-city-1" class="block text-xs font-bold t-soft mb-1.5" data-en="First City:"
+              >شهر نخست:</label
+            >
+            <select id="compare-city-1" aria-label="انتخاب شهر نخست"></select>
+          </div>
+          <div>
+            <label for="compare-city-2" class="block text-xs font-bold t-soft mb-1.5" data-en="Second City:"
+              >شهر دوم:</label
+            >
+            <select id="compare-city-2" aria-label="انتخاب شهر دوم"></select>
+          </div>
+        </div>
+        <div class="obsidian-card rounded-2xl p-4 flex flex-col items-center">
+          <span class="text-xs font-bold t-soft mb-1" data-en="Comparative Radar (D3)"
+            >نمودار عنکبوتی تطبیقی (D3 Radar)</span
+          >
+          <div
+            id="comparison-radar-chart"
+            role="img"
+            aria-label="نمودار راداری مقایسه شهرها"
+            class="w-full max-w-md h-72"
+          ></div>
+        </div>
+        <div
+          id="comparison-table-container"
+          class="rounded-2xl border border-[var(--city-border)] overflow-hidden"
+          style="
+            background: color-mix(in srgb, var(--city-text) 3%, transparent);
+          "
+        ></div>
+      </div>
+    </div>
+
+    <!-- ================= FAVORITES DRAWER ================= -->
+    <div
+      id="favorites-drawer"
+      class="hidden fixed inset-0 z-50 flex items-center justify-end bg-black/80 backdrop-blur-xl"
+    >
+      <div
+        class="obsidian-elevated w-full max-w-md h-full p-6 border-s border-[var(--city-border-strong)] flex flex-col justify-between overflow-y-auto"
+        style="border-radius: 0"
+      >
+        <div class="space-y-6">
+          <div
+            class="flex items-center justify-between pb-4 border-b border-[var(--city-border)]"
+          >
+            <h3 class="font-bold text-lg flex items-center gap-2">
+              <svg
+                class="w-5 h-5 text-rose-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+              <span data-en="Your Saved Cities">شهرهای برگزیده شما</span>
+            </h3>
+            <button
+              id="close-favorites-btn"
+              type="button"
+              class="icon-btn"
+              aria-label="Close"
+            >
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+          <div id="favorites-list-container"></div>
+        </div>
+        <div class="pt-6 border-t border-[var(--city-border)] text-center">
+          <p class="text-xs t-muted" data-en="Favorites are safely stored in your browser storage.">
+            علاقه‌مندی‌ها در حافظه مرورگر شما ذخیره می‌شوند.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- UI helpers: scroll progress, header state, back-to-top, pointer spotlight, footer proxies, data-en sync -->
+    <script>
+      (() => {
+        const $ = (id) => document.getElementById(id);
+        const header = $("site-header"),
+          bar = $("scroll-progress"),
+          up = $("back-to-top");
+        const ring = up ? up.querySelector(".bar") : null,
+          C = 125.66;
+        let queued = false;
+        const update = () => {
+          queued = false;
+          const y = scrollY,
+            max = document.documentElement.scrollHeight - innerHeight;
+          const p = max > 0 ? Math.min(y / max, 1) : 0;
+          if (bar) bar.style.setProperty("--p", p);
+          if (ring) ring.style.strokeDashoffset = C * (1 - p);
+          if (header) header.classList.toggle("is-scrolled", y > 24);
+          if (up) up.classList.toggle("show", y > 600);
+        };
+        addEventListener(
+          "scroll",
+          () => {
+            if (!queued) {
+              queued = true;
+              requestAnimationFrame(update);
+            }
+          },
+          { passive: true },
+        );
+        update();
+        if (up) {
+          up.addEventListener("click", () =>
+            scrollTo({ top: 0, behavior: "smooth" }),
+          );
+        }
+
+        document.addEventListener(
+          "pointermove",
+          (e) => {
+            const card = e.target.closest && e.target.closest(".obsidian-card");
+            if (!card) return;
+            const r = card.getBoundingClientRect();
+            card.style.setProperty("--mx", e.clientX - r.left + "px");
+            card.style.setProperty("--my", e.clientY - r.top + "px");
+          },
+          { passive: true },
+        );
+
+        document.querySelectorAll("[data-proxy]").forEach((b) =>
+          b.addEventListener("click", () => {
+            const t = $(b.dataset.proxy);
+            if (t) t.click();
+          }),
+        );
+
+        const root = document.documentElement;
+        const swap = () => {
+          const en = root.dir === "ltr";
+          document.querySelectorAll("[data-en]").forEach((el) => {
+            if (!el.dataset.fa) el.dataset.fa = el.textContent;
+            el.textContent = en ? el.dataset.en : el.dataset.fa;
+          });
+        };
+        new MutationObserver(swap).observe(root, {
+          attributes: true,
+          attributeFilter: ["dir", "lang"],
+        });
+        swap();
+      })();
+    </script>
+
+    <!-- Starfield canvas script -->
+    <script>
+      (() => {
+        const cv = document.getElementById("sky");
+        if (cv) {
+          const ctx = cv.getContext("2d"),
+            root = document.documentElement;
+          const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+          let w = 0,
+            h = 0,
+            stars = [],
+            rgb = [22, 198, 177],
+            light = false,
+            shoot = null,
+            nextShoot = 4000;
+          const mouse = { x: -999, y: -999 };
+          const readColor = () => {
+            const v =
+              getComputedStyle(root)
+                .getPropertyValue("--city-primary")
+                .trim() || "#16c6b1";
+            const t = document.createElement("canvas").getContext("2d");
+            t.fillStyle = v;
+            const c = t.fillStyle;
+            rgb =
+              c[0] === "#"
+                ? [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16))
+                : c
+                    .match(/[\d.]+/g)
+                    .slice(0, 3)
+                    .map(Number);
+            light = !root.classList.contains("dark");
+          };
+          const draw = (t) => {
+            ctx.clearRect(0, 0, w, h);
+            const [r, g, b] = rgb,
+              base = light ? "50,50,110" : "255,255,255",
+              near = [];
+            for (const s of stars) {
+              if (!still) {
+                s.x += s.vx * s.z;
+                s.y += s.vy * s.z;
+              }
+              if (s.x < -5) s.x = w + 5;
+              else if (s.x > w + 5) s.x = -5;
+              if (s.y < -5) s.y = h + 5;
+              else if (s.y > h + 5) s.y = -5;
+              const a =
+                (0.3 + 0.7 * Math.abs(Math.sin(t / 1100 + s.tw))) *
+                s.z *
+                (light ? 0.55 : 1);
+              ctx.fillStyle = `rgba(${base},${a})`;
+              ctx.beginPath();
+              ctx.arc(s.x, s.y, s.r * s.z + 0.3, 0, 6.283);
+              ctx.fill();
+              if (Math.hypot(s.x - mouse.x, s.y - mouse.y) < 170) near.push(s);
+            }
+            ctx.lineWidth = 0.7;
+            for (let i = 0; i < near.length; i++) {
+              const a = near[i],
+                dm = Math.hypot(a.x - mouse.x, a.y - mouse.y);
+              ctx.strokeStyle = `rgba(${r},${g},${b},${(1 - dm / 170) * 0.5})`;
+              ctx.beginPath();
+              ctx.moveTo(a.x, a.y);
+              ctx.lineTo(mouse.x, mouse.y);
+              ctx.stroke();
+              for (let j = i + 1; j < near.length; j++) {
+                const c = near[j],
+                  d = Math.hypot(a.x - c.x, a.y - c.y);
+                if (d < 110) {
+                  ctx.strokeStyle = `rgba(${r},${g},${b},${(1 - d / 110) * 0.35})`;
+                  ctx.beginPath();
+                  ctx.moveTo(a.x, a.y);
+                  ctx.lineTo(c.x, c.y);
+                  ctx.stroke();
+                }
+              }
+            }
+            if (still) return;
+            if (!shoot && t > nextShoot) {
+              shoot = {
+                x: Math.random() * w * 0.8 + w * 0.1,
+                y: Math.random() * h * 0.35,
+                vx: (Math.random() < 0.5 ? -1 : 1) * (9 + Math.random() * 5),
+                vy: 4 + Math.random() * 3,
+                life: 1,
+              };
+            }
+            if (shoot) {
+              const s = shoot,
+                tx = s.x - s.vx * 9,
+                ty = s.y - s.vy * 9;
+              const gr = ctx.createLinearGradient(s.x, s.y, tx, ty);
+              gr.addColorStop(0, `rgba(${base},${s.life})`);
+              gr.addColorStop(1, `rgba(${r},${g},${b},0)`);
+              ctx.strokeStyle = gr;
+              ctx.lineWidth = 1.6;
+              ctx.beginPath();
+              ctx.moveTo(s.x, s.y);
+              ctx.lineTo(tx, ty);
+              ctx.stroke();
+              s.x += s.vx;
+              s.y += s.vy;
+              s.life -= 0.012;
+              if (s.life <= 0 || s.x < -60 || s.x > w + 60 || s.y > h + 60) {
+                shoot = null;
+                nextShoot = t + 5000 + Math.random() * 7000;
+              }
+            }
+          };
+          const resize = () => {
+            const dpr = Math.min(devicePixelRatio || 1, 2);
+            w = innerWidth;
+            h = innerHeight;
+            cv.width = w * dpr;
+            cv.height = h * dpr;
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+            const n = Math.round(Math.min(140, (w * h) / 13000));
+            stars = Array.from({ length: n }, () => ({
+              x: Math.random() * w,
+              y: Math.random() * h,
+              z: Math.random() * 0.9 + 0.1,
+              vx: (Math.random() - 0.5) * 0.25,
+              vy: (Math.random() - 0.5) * 0.25,
+              tw: Math.random() * 6.28,
+              r: Math.random() * 1.2 + 0.4,
+            }));
+            if (still) draw(0);
+          };
+          const loop = (t) => {
+            draw(t);
+            if (!still) requestAnimationFrame(loop);
+          };
+          readColor();
+          resize();
+          if (!still) requestAnimationFrame(loop);
+          addEventListener("resize", resize);
+          addEventListener(
+            "pointermove",
+            (e) => {
+              mouse.x = e.clientX;
+              mouse.y = e.clientY;
+            },
+            { passive: true },
+          );
+          root.addEventListener("mouseleave", () => {
+            mouse.x = mouse.y = -999;
+          });
+          new MutationObserver(readColor).observe(root, {
+            attributes: true,
+            attributeFilter: ["class", "style", "data-theme"],
+          });
+        }
+
+        const links = [...document.querySelectorAll(".nav-link")];
+        const byId = new Map(
+          links.map((a) => [a.getAttribute("href")?.slice(1), a]),
+        );
+        const io = new IntersectionObserver(
+          (entries) =>
+            entries.forEach((e) => {
+              if (!e.isIntersecting) return;
+              links.forEach((l) => l.classList.remove("is-active"));
+              const l = byId.get(e.target.id);
+              if (l) l.classList.add("is-active");
+            }),
+          { rootMargin: "-40% 0px -55% 0px" },
+        );
+        byId.forEach((_, id) => {
+          if (!id) return;
+          const el = document.getElementById(id);
+          if (el) io.observe(el);
+        });
+      })();
+    </script>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
