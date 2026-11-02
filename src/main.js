@@ -459,27 +459,56 @@ class ShahravaApp {
 
     const soundBtn = $("#sound-toggle-btn");
     if (soundBtn) {
-      soundBtn.addEventListener("click", () => {
-        const isPlaying = citySoundEngine.toggle(this.activeTheme.id);
+      soundBtn.addEventListener("click", async () => {
         const wave = $("#sound-wave-icon");
         const text = $("#sound-btn-text");
-        if (isPlaying) {
-          soundBtn.classList.add(
-            "border-emerald-500",
-            "text-emerald-400",
-            "bg-emerald-500/10",
+        const lang = getLang();
+
+        if (soundBtn.disabled) return;
+        soundBtn.disabled = true;
+        soundBtn.classList.add("opacity-50");
+
+        try {
+          const isPlaying = await citySoundEngine.toggle(this.activeTheme.id);
+
+          if (isPlaying) {
+            soundBtn.classList.add(
+              "border-emerald-500",
+              "text-emerald-400",
+              "bg-emerald-500/10",
+            );
+            soundBtn.setAttribute("aria-pressed", "true");
+            if (wave) wave.classList.add("animate-pulse");
+            if (text)
+              text.textContent = lang === "fa" ? "در حال پخش" : "Playing";
+            this.showToast(
+              lang === "fa" ? "🔊 اتمسفر صوتی روشن شد" : "🔊 Sound enabled",
+              "success",
+            );
+          } else {
+            soundBtn.classList.remove(
+              "border-emerald-500",
+              "text-emerald-400",
+              "bg-emerald-500/10",
+            );
+            soundBtn.setAttribute("aria-pressed", "false");
+            if (wave) wave.classList.remove("animate-pulse");
+            if (text)
+              text.textContent = lang === "fa" ? "اتمسفر صوتی" : "Sound";
+            this.showToast(
+              lang === "fa" ? "🔇 اتمسفر صوتی خاموش شد" : "🔇 Sound disabled",
+              "info",
+            );
+          }
+        } catch (err) {
+          console.error("[sound] toggle failed:", err);
+          this.showToast(
+            lang === "fa" ? "خطا در پخش صدا" : "Failed to play sound",
+            "error",
           );
-          if (wave) wave.classList.add("animate-pulse");
-          if (text)
-            text.textContent = t("soundModal.activeThemeSound", "در حال پخش");
-        } else {
-          soundBtn.classList.remove(
-            "border-emerald-500",
-            "text-emerald-400",
-            "bg-emerald-500/10",
-          );
-          if (wave) wave.classList.remove("animate-pulse");
-          if (text) text.textContent = t("nav.sound", "اتمسفر صوتی");
+        } finally {
+          soundBtn.disabled = false;
+          soundBtn.classList.remove("opacity-50");
         }
       });
     }
@@ -1470,7 +1499,7 @@ class ShahravaApp {
     if (navCompare) navCompare.textContent = t("nav.compare");
     if (navFavs) navFavs.textContent = t("nav.favorites");
     if (langBtn) langBtn.textContent = t("nav.langToggle");
-
+    
     const searchInput = $("#global-city-search-input");
     if (searchInput) searchInput.placeholder = t("search.placeholder");
 

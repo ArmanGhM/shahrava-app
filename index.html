@@ -163,16 +163,16 @@
 
     <div class="relative z-10 flex flex-col min-h-screen">
       <!-- ═══════════════ HEADER ═══════════════ -->
-      <header
-        id="site-header"
-        class="site-header sticky top-0 z-40 px-2 sm:px-4 pt-2 sm:pt-3"
-      >
-        <div class="site-header__bar max-w-7xl mx-auto">
+      <!-- ═══════════════ HEADER · FIXED NAVBAR v4 ═══════════════
+         جایگزین کل بلوک قدیمی <header id="site-header"> ... </header>
+         همهٔ idهای مورد استفادهٔ main.js حفظ شده‌اند. -->
+      <header id="site-header" class="site-header nb">
+                                                <div class="nb__bar">
           <!-- Brand -->
-          <a href="#city=tehran" class="brand">
+          <a href="#city=tehran" class="nb-brand" aria-label="شهرآوا">
             <span class="brand-mark">
               <svg
-                class="w-5 h-5 sm:w-6 sm:h-6"
+                class="w-5 h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -186,19 +186,19 @@
                 />
               </svg>
             </span>
-            <span class="brand-info">
-              <span class="brand-line">
-                <span id="brand-name-text" class="brand-name">شهرآوا</span>
+            <span class="nb-info">
+              <span class="nb-line">
+                <span id="brand-name-text" class="nb-name">شهرآوا</span>
                 <span
                   id="brand-badge-text"
-                  class="brand-badge"
+                  class="nb-badge"
                   data-en="Global Edition"
                   >نسخه بین‌المللی</span
                 >
               </span>
               <p
                 id="brand-tagline-text"
-                class="brand-tagline"
+                class="nb-tagline"
                 data-en="Global Smart City Exploration & Dynamic Visual Identity Platform"
               >
                 کاوش هوشمند و هویت بصری شهرهای جهان
@@ -206,133 +206,102 @@
             </span>
           </a>
 
-          <!-- Actions -->
-          <div class="header-actions">
-            <button
-              id="sound-toggle-btn"
-              type="button"
-              class="icon-btn header-action--optional"
-              title="اتمسفر صوتی شهر"
-              aria-label="اتمسفر صوتی"
-            >
+          <!-- Section links (desktop) — data-t = id of target section -->
+          <nav class="nb-links" aria-label="بخش‌های صفحه">
+            <span class="nb-ind" aria-hidden="true"></span>
+            <a class="nb-link" href="#hero-section" data-t="hero-section">
               <svg
-                id="sound-wave-icon"
-                class="w-4 h-4 text-[var(--city-primary)]"
+                class="nb-i"
+                viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
                 aria-hidden="true"
               >
                 <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                  d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
                 />
               </svg>
-              <span
-                id="sound-btn-text"
-                class="header-action-text"
-                data-en="Audio Atmosphere"
-                >اتمسفر صوتی</span
-              >
-            </button>
-
-            <button
-              id="open-favorites-drawer-btn"
-              type="button"
-              class="icon-btn"
-              title="شهرهای نشان‌شده"
-              aria-label="شهرهای نشان‌شده"
-            >
+              <span data-en="Overview">نمای کلی</span>
+            </a>
+            <a class="nb-link" href="#weather-section" data-t="weather-section">
               <svg
-                class="w-4 h-4 text-rose-400"
+                class="nb-i"
+                viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
                 aria-hidden="true"
               >
                 <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"
                 />
               </svg>
-              <span
-                id="nav-favs-btn-text"
-                class="header-action-text"
-                data-en="Favorites"
-                >علاقه‌مندی‌ها</span
-              >
-            </button>
-
-            <button
-              id="nav-compare-btn"
-              type="button"
-              class="icon-btn"
-              title="میز مقایسه شهرها"
-              aria-label="میز مقایسه شهرها"
-            >
+              <span data-en="Weather">آب‌وهوا</span>
+            </a>
+            <a class="nb-link" href="#data-section" data-t="data-section">
               <svg
-                class="w-4 h-4 text-amber-400"
+                class="nb-i"
+                viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
                 aria-hidden="true"
               >
                 <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
                   d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
                 />
               </svg>
-              <span
-                id="nav-compare-btn-text"
-                class="header-action-text"
-                data-en="Compare"
-                >مقایسه</span
-              >
-            </button>
-
-            <button
-              id="theme-mode-btn"
-              type="button"
-              class="icon-btn"
-              title="تغییر حالت شب و روز"
-              aria-label="تغییر حالت شب و روز"
-            >
+              <span data-en="Charts">نمودارها</span>
+            </a>
+            <a class="nb-link" href="#map-section" data-t="map-section">
               <svg
-                id="theme-mode-icon"
-                class="w-4 h-4"
+                class="nb-i"
+                viewBox="0 0 24 24"
                 fill="none"
                 stroke="currentColor"
-                viewBox="0 0 24 24"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
                 aria-hidden="true"
               >
                 <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                  d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0zM15 11a3 3 0 11-6 0 3 3 0 016 0z"
                 />
               </svg>
-            </button>
-
-            <button
-              id="lang-toggle-btn"
-              type="button"
-              class="icon-btn icon-btn--solid"
-              title="Switch Language / تغییر زبان"
-              aria-label="تغییر زبان"
+              <span data-en="Map">نقشه</span>
+            </a>
+            <a
+              class="nb-link"
+              href="#featured-section"
+              data-t="featured-section"
             >
-              <span id="lang-toggle-btn-text">EN</span>
-            </button>
-          </div>
+              <svg
+                class="nb-i"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path
+                  d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <span data-en="Cities">شهرها</span>
+            </a>
+          </nav>
 
-          <!-- Search (position:relative so dropdown aligns correctly) -->
-          <div class="header-search" style="position: relative" role="search">
+          <!-- Search -->
+          <div class="nb-search" style="position: relative" role="search">
             <div class="search-bar">
               <svg
                 class="search-bar__icon"
@@ -391,6 +360,202 @@
               role="listbox"
               aria-label="نتایج جستجو"
             ></div>
+          </div>
+
+          <!-- Actions -->
+          <div class="nb-actions">
+            <button
+              id="nb-search-btn"
+              type="button"
+              class="nb-btn nb-m"
+              aria-label="جستجو"
+              aria-expanded="false"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
+
+            <!-- sound: نگه داشته شده برای main.js (مثل قبل مخفی) -->
+            <button
+              id="sound-toggle-btn"
+              type="button"
+              class="nb-btn sound-toggle-btn"
+              title="اتمسفر صوتی شهر"
+              aria-label="اتمسفر صوتی"
+            >
+              <svg
+                id="sound-wave-icon"
+                class="text-[var(--city-primary)]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
+                />
+              </svg>
+              <span
+                id="sound-btn-text"
+                class="nb-lbl"
+                data-en="Audio Atmosphere"
+                >اتمسفر صوتی</span
+              >
+            </button>
+
+            <button
+              id="open-favorites-drawer-btn"
+              type="button"
+              class="nb-btn nb-d"
+              title="شهرهای نشان‌شده"
+              aria-label="شهرهای نشان‌شده"
+            >
+              <svg
+                class="text-rose-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+              <span id="nav-favs-btn-text" class="nb-lbl" data-en="Favorites"
+                >علاقه‌مندی‌ها</span
+              >
+            </button>
+
+            <button
+              id="nav-compare-btn"
+              type="button"
+              class="nb-btn nb-d"
+              title="میز مقایسه شهرها"
+              aria-label="میز مقایسه شهرها"
+            >
+              <svg
+                class="text-amber-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                />
+              </svg>
+              <span id="nav-compare-btn-text" class="nb-lbl" data-en="Compare"
+                >مقایسه</span
+              >
+            </button>
+
+            <button
+              id="theme-mode-btn"
+              type="button"
+              class="nb-btn"
+              title="تغییر حالت شب و روز"
+              aria-label="تغییر حالت شب و روز"
+            >
+              <svg
+                id="theme-mode-icon"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                />
+              </svg>
+            </button>
+
+            <button
+              id="lang-toggle-btn"
+              type="button"
+              class="nb-btn nb-btn--solid"
+              title="Switch Language / تغییر زبان"
+              aria-label="تغییر زبان"
+            >
+              <span id="lang-toggle-btn-text">EN</span>
+            </button>
+
+            <button
+              id="nb-menu-btn"
+              type="button"
+              class="nb-btn nb-m"
+              aria-label="منو"
+              aria-expanded="false"
+              aria-controls="nb-panel"
+            >
+              <span class="nb-burger" aria-hidden="true"
+                ><i></i><i></i><i></i
+              ></span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mobile sheet (links are cloned here by the script below) -->
+        <div id="nb-panel" class="nb-panel">
+          <div class="nb-panel__grid"></div>
+          <div class="nb-panel__sep"></div>
+          <div class="nb-panel__quick">
+            <button
+              type="button"
+              class="nb-pl"
+              data-proxy="open-favorites-drawer-btn"
+            >
+              <svg
+                class="nb-i text-rose-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                />
+              </svg>
+              <span data-en="Favorites">علاقه‌مندی‌ها</span>
+            </button>
+            <button type="button" class="nb-pl" data-proxy="nav-compare-btn">
+              <svg
+                class="nb-i text-amber-400"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              <span data-en="Compare cities">مقایسه شهرها</span>
+            </button>
           </div>
         </div>
       </header>
@@ -1916,7 +2081,134 @@
         });
       })();
     </script>
+    <!-- ═══════════════ NAVBAR LOGIC ═══════════════
+         این اسکریپت را درست بعد از </header> بگذارید (قبل از اسکریپت UI HELPERS). -->
+    <script>
+      (() => {
+        const nb = document.getElementById("site-header");
+        const box = nb.querySelector(".nb-links");
+        const ind = nb.querySelector(".nb-ind");
+        const grid = nb.querySelector(".nb-panel__grid");
+        const menuBtn = document.getElementById("nb-menu-btn");
+        const searchBtn = document.getElementById("nb-search-btn");
+        const input = document.getElementById("global-city-search-input");
+        const links = [...box.querySelectorAll(".nb-link")];
+        const ids = links.map((l) => l.dataset.t);
 
+        // clone desktop links into the mobile sheet
+        links.forEach((a) => {
+          const c = a.cloneNode(true);
+          c.className = "nb-pl";
+          grid.append(c);
+        });
+        const pls = [...grid.children];
+
+        // sliding indicator
+        const place = () => {
+          const a = links.find((l) => l.classList.contains("is-active"));
+          box.classList.toggle("has-active", !!a && box.offsetWidth > 0);
+          if (!a) return;
+          ind.style.width = a.offsetWidth + "px";
+          ind.style.transform = `translateX(${a.offsetLeft}px)`;
+        };
+        const setActive = (id) => {
+          [...links, ...pls].forEach((l) =>
+            l.classList.toggle("is-active", l.dataset.t === id),
+          );
+          place();
+        };
+
+        // scroll-spy
+        let queued = false;
+        const spy = () => {
+          queued = false;
+          const line = innerHeight * 0.35;
+          let cur = ids[0];
+          ids.forEach((id) => {
+            const s = document.getElementById(id);
+            if (s && s.getBoundingClientRect().top <= line) cur = id;
+          });
+          if (
+            innerHeight + scrollY >=
+            document.documentElement.scrollHeight - 4
+          )
+            cur = ids[ids.length - 1];
+          setActive(cur);
+        };
+        addEventListener(
+          "scroll",
+          () => {
+            if (!queued) {
+              queued = true;
+              requestAnimationFrame(spy);
+            }
+          },
+          { passive: true },
+        );
+
+        // sheet / search toggles
+        const closeAll = () => {
+          nb.classList.remove("menu-open", "search-open");
+          menuBtn.setAttribute("aria-expanded", "false");
+          searchBtn.setAttribute("aria-expanded", "false");
+        };
+        menuBtn.addEventListener("click", () => {
+          const open = !nb.classList.contains("menu-open");
+          closeAll();
+          nb.classList.toggle("menu-open", open);
+          menuBtn.setAttribute("aria-expanded", String(open));
+        });
+        searchBtn.addEventListener("click", () => {
+          const open = !nb.classList.contains("search-open");
+          closeAll();
+          nb.classList.toggle("search-open", open);
+          searchBtn.setAttribute("aria-expanded", String(open));
+          if (open) input.focus();
+        });
+
+        // smooth scroll without touching location.hash (keeps #city=... intact)
+        document.addEventListener("click", (e) => {
+          const a = e.target.closest("a[data-t]");
+          if (a && nb.contains(a)) {
+            e.preventDefault();
+            const s = document.getElementById(a.dataset.t);
+            if (s) s.scrollIntoView({ behavior: "smooth", block: "start" });
+            closeAll();
+            return;
+          }
+          if (e.target.closest(".nb-panel [data-proxy]")) return closeAll();
+          if (!nb.contains(e.target)) closeAll();
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") closeAll();
+        });
+        // Ctrl/⌘ + K on small screens: reveal the search row before main.js focuses it
+        document.addEventListener(
+          "keydown",
+          (e) => {
+            if (
+              (e.ctrlKey || e.metaKey) &&
+              e.key.toLowerCase() === "k" &&
+              innerWidth < 1024
+            ) {
+              nb.classList.add("search-open");
+              nb.classList.remove("menu-open");
+            }
+          },
+          true,
+        );
+        matchMedia("(min-width:1024px)").addEventListener("change", closeAll);
+
+        // keep indicator aligned after resize / language switch / font load
+        new ResizeObserver(place).observe(box);
+        new MutationObserver(() => setTimeout(place, 60)).observe(
+          document.documentElement,
+          { attributes: true, attributeFilter: ["dir", "lang"] },
+        );
+        if (document.fonts) document.fonts.ready.then(place);
+        spy();
+      })();
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

@@ -1,6 +1,6 @@
 /**
  * SHAHRAVA — Favorites Drawer
- * ✅ Accessible: ARIA dialog, focus-trap, focus-restore.
+ * ✅ Accessible + SVG placeholder + progressive loading with proxy
  */
 
 import { storage } from "../services/storage.js";
@@ -9,7 +9,7 @@ import { getCityTheme } from "../data/themes.js";
 import { getLang, t } from "../i18n/index.js";
 import {
   createCityPlaceholder,
-  progressiveLoadImage,
+  setupProgressiveImages,
 } from "../utils/placeholders.js";
 
 const FOCUSABLE_SELECTOR =
@@ -74,15 +74,12 @@ export class FavoritesDrawer {
 
   _trapFocus() {
     if (!this.drawer) return;
-
     const handleTab = (e) => {
       if (e.key !== "Tab") return;
       const focusable = this.drawer.querySelectorAll(FOCUSABLE_SELECTOR);
       if (!focusable.length) return;
-
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
@@ -91,7 +88,6 @@ export class FavoritesDrawer {
         first.focus();
       }
     };
-
     if (this._tabHandler) {
       this.drawer.removeEventListener("keydown", this._tabHandler);
     }
@@ -126,20 +122,23 @@ export class FavoritesDrawer {
         const name = lang === "fa" ? city.nameFa : city.nameEn;
         const country = lang === "fa" ? city.countryFa : city.countryEn;
 
-        // ✅ Use SVG placeholder + progressive load instead of hardcoded Unsplash URL
+        // ✅ SVG placeholder به عنوان src اولیه
         const placeholder = createCityPlaceholder(
           name,
           theme.primary,
           theme.secondary,
           { width: 400, height: 400 },
         );
-        const extAttr = city.heroImage
-          ? `data-external-src="${city.heroImage}"`
-          : "";
+
+        // ✅ عکس واقعی با data-external-src (progressive load + proxy)
+        const extAttr =
+          city.heroImage && city.heroImage.trim().length > 0
+            ? `data-external-src="${city.heroImage}"`
+            : "";
 
         return `
           <div class="fav-card obsidian-card relative flex items-center justify-between p-4 rounded-2xl transition-all duration-200 group">
-            <button type="button" class="select-city-btn flex items-center gap-3.5 flex-1 text-start" data-city-id="${city.id}">
+            <div class="flex items-center gap-3.5 cursor-pointer select-city-btn" data-city-id="${city.id}">
               <img src="${placeholder}" ${extAttr} alt="${name}" loading="lazy" width="48" height="48" class="w-12 h-12 rounded-xl object-cover border border-white/15 shadow-md group-hover:scale-105 transition-transform duration-300"/>
               <div>
                 <div class="font-bold text-white text-sm flex items-center gap-2 group-hover:text-[var(--city-primary)] transition-colors">
@@ -148,8 +147,8 @@ export class FavoritesDrawer {
                 </div>
                 <div class="text-xs text-slate-400">${country}</div>
               </div>
-            </button>
-            <button type="button" data-remove-id="${city.id}" class="remove-fav-btn p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors" title="حذف از نشان‌شده‌ها" aria-label="حذف ${name} از علاقه‌مندی‌ها">
+            </div>
+            <button data-remove-id="${city.id}" class="remove-fav-btn p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors" title="حذف از نشان‌شده‌ها">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
               </svg>
@@ -160,11 +159,9 @@ export class FavoritesDrawer {
       .join("");
 
     this.listContainer.innerHTML = `<div class="space-y-2.5">${itemsHtml}</div>`;
-    this.listContainer
-      .querySelectorAll("img[data-external-src]")
-      .forEach((img) => {
-        progressiveLoadImage(img, img.dataset.externalSrc);
-      });
+
+    // ✅ اجرای progressive loading (با پروکسی)
+    setupProgressiveImages(this.listContainer);
 
     this.listContainer.querySelectorAll(".select-city-btn").forEach((el) => {
       el.addEventListener("click", () => {

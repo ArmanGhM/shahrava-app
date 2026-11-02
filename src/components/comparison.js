@@ -1,7 +1,6 @@
 /**
- * SHAHRAVA — City Comparison Modal & Tool
- * Compare any 2 metropolises side-by-side with D3 radar + spec table.
- * ✅ Accessible: ARIA dialog, focus-trap, focus-restore.
+ * SHAHRAVA — City Comparison Modal
+ * ✅ Accessible + SVG placeholder + progressive loading with proxy
  */
 
 import { CITIES, resolveCitySafe } from "../data/cities.js";
@@ -33,7 +32,6 @@ export class CityComparisonModal {
     this.city1Id = "tehran";
     this.city2Id = "tokyo";
 
-    // ✅ Focus management state
     this._previouslyFocused = null;
     this._tabHandler = null;
 
@@ -47,7 +45,6 @@ export class CityComparisonModal {
       this.closeBtn.addEventListener("click", () => this.hide());
     }
 
-    // Click on backdrop closes modal
     this.modal.addEventListener("click", (e) => {
       if (e.target === this.modal) this.hide();
     });
@@ -77,7 +74,6 @@ export class CityComparisonModal {
     const lang = getLang();
     const allOptions = [...CITIES];
 
-    // Include any OSM cities currently in session
     [this.city1Id, this.city2Id].forEach((id) => {
       if (id && !allOptions.some((c) => c.id === id)) {
         const osmCity = resolveCitySafe(id);
@@ -110,7 +106,6 @@ export class CityComparisonModal {
       this.modal.setAttribute("aria-hidden", "false");
       document.body.classList.add("overflow-hidden");
 
-      // ✅ Focus management
       this._previouslyFocused = document.activeElement;
       this._trapFocus();
       setTimeout(() => this.city1Select?.focus(), 60);
@@ -125,13 +120,11 @@ export class CityComparisonModal {
       this.modal.setAttribute("aria-hidden", "true");
       document.body.classList.remove("overflow-hidden");
 
-      // ✅ Restore focus to whatever opened the modal
       if (this._previouslyFocused && this._previouslyFocused.focus) {
         this._previouslyFocused.focus();
       }
       this._previouslyFocused = null;
 
-      // Cleanup tab handler
       if (this._tabHandler) {
         this.modal.removeEventListener("keydown", this._tabHandler);
         this._tabHandler = null;
@@ -139,18 +132,14 @@ export class CityComparisonModal {
     }
   }
 
-  /** ✅ Focus-trap: keeps Tab inside the modal while open. */
   _trapFocus() {
     if (!this.modal) return;
-
     const handleTab = (e) => {
       if (e.key !== "Tab") return;
       const focusable = this.modal.querySelectorAll(FOCUSABLE_SELECTOR);
       if (!focusable.length) return;
-
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-
       if (e.shiftKey && document.activeElement === first) {
         e.preventDefault();
         last.focus();
@@ -159,7 +148,6 @@ export class CityComparisonModal {
         first.focus();
       }
     };
-
     if (this._tabHandler) {
       this.modal.removeEventListener("keydown", this._tabHandler);
     }
@@ -180,6 +168,7 @@ export class CityComparisonModal {
       const country1 = lang === "fa" ? city1.countryFa : city1.countryEn;
       const country2 = lang === "fa" ? city2.countryFa : city2.countryEn;
 
+      // ✅ SVG placeholder به عنوان src اولیه
       const placeholder1 = createCityPlaceholder(
         name1,
         theme1.primary,
@@ -219,6 +208,7 @@ export class CityComparisonModal {
         </div>
       `;
 
+      // ✅ بارگذاری با پروکسی از طریق progressiveLoadImage
       const img1 = document.getElementById("compare-img-1");
       const img2 = document.getElementById("compare-img-2");
       if (img1 && city1.heroImage) progressiveLoadImage(img1, city1.heroImage);

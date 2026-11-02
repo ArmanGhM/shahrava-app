@@ -1,4 +1,4 @@
-/**
+﻿/**
  * SHAHRAVA (شهرآوا) — Global Curated City & Attractions Database
  * 13 iconic cities with 11-14 attractions each (~156 total attractions)
  * across 9 distinct categories:

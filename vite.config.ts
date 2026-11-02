@@ -4,13 +4,16 @@ import { defineConfig } from "vite";
 
 export default defineConfig(() => {
   return {
-    plugins: [tailwindcss()], // ✅ حذف react() — پروژه Vanilla JS است
+    plugins: [tailwindcss()],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "."),
       },
     },
-    // ✅ build optimization برای production
+    // ✅ این بخش را اضافه کنید
+    optimizeDeps: {
+      include: ["maplibre-gl", "@maplibre/maplibre-gl-leaflet"],
+    },
     build: {
       outDir: "dist",
       sourcemap: false,
@@ -18,18 +21,15 @@ export default defineConfig(() => {
       rollupOptions: {
         output: {
           manualChunks: {
-            d3: ["d3"],
+            maplibre: ["maplibre-gl"],
             leaflet: ["leaflet"],
-            topojson: ["topojson-client"],
+            d3: ["d3"],
           },
         },
       },
     },
     server: {
-      // HMR is disabled in AI Studio via DISABLE_HMR env var.
-      // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== "true",
-      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === "true" ? null : {},
     },
   };

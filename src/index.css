@@ -2593,3 +2593,439 @@ html:not(.dark) #favorites-drawer {
     transform: none !important;
   }
 }
+/* ══════════════════════════════════════════════════════════════
+   SHAHRAVA · Fixed Navbar v4  (src/navbar.css)
+   Fixed · floating glass bar · sliding scroll-spy indicator
+   Mobile menu sheet · dark + light · RTL/LTR safe
+   ══════════════════════════════════════════════════════════════ */
+
+:root {
+  --hdr-h: 4.5rem; /* space reserved under the fixed bar */
+}
+@media (min-width: 1024px) {
+  :root {
+    --hdr-h: 5rem;
+  }
+}
+html {
+  scroll-padding-top: calc(var(--hdr-h) + 0.5rem);
+}
+body {
+  padding-top: var(--hdr-h);
+}
+
+/* ─── Shell ─── */
+.nb {
+  position: fixed;
+  inset-inline: 0;
+  top: 0;
+  z-index: 40;
+  padding: 0.5rem 0.5rem 0;
+  pointer-events: none; /* only the bar & panel catch clicks */
+  transition: padding var(--dur-slow) var(--ease-out-expo);
+}
+.nb.is-scrolled {
+  padding-top: 0.3rem;
+}
+.nb__bar {
+  pointer-events: auto;
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 80rem;
+  margin-inline: auto;
+  padding: 0.45rem 0.55rem;
+  border-radius: var(--r-2xl);
+  background: color-mix(in srgb, var(--city-surface) 70%, transparent);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  border: 1px solid var(--city-border);
+  box-shadow: var(--shadow-md), var(--sh-rim);
+  transition:
+    background var(--dur-base) ease,
+    box-shadow var(--dur-slow) var(--ease-out-expo),
+    border-color var(--dur-base) ease;
+}
+.nb.is-scrolled .nb__bar {
+  background: color-mix(in srgb, var(--city-surface) 90%, transparent);
+  border-color: var(--city-border-strong);
+  box-shadow:
+    var(--shadow-lg),
+    0 0 42px -18px var(--city-glow-strong);
+}
+html:not(.dark) .nb__bar {
+  background: color-mix(in srgb, #fff 76%, transparent);
+}
+html:not(.dark) .nb.is-scrolled .nb__bar {
+  background: color-mix(in srgb, #fff 92%, transparent);
+}
+.nb .header-action--optional {
+  display: none !important;
+}
+
+/* ─── Brand ─── */
+.nb-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  border-radius: var(--r-lg);
+}
+.nb-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.nb-line {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.nb-name {
+  font-family: "Lalezar", "Vazirmatn", sans-serif;
+  font-size: 1.45rem;
+  line-height: 1;
+  color: var(--city-text);
+  white-space: nowrap;
+  transition: color var(--dur-base) ease;
+}
+html[dir="ltr"] .nb-name {
+  font-family: "Sora", "Plus Jakarta Sans", sans-serif;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.nb-brand:hover .nb-name {
+  color: var(--city-primary);
+}
+.nb-badge {
+  display: none;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--r-full);
+  font-size: 0.6rem;
+  font-weight: 800;
+  white-space: nowrap;
+  color: var(--city-primary);
+  border: 1px solid var(--city-border-active);
+  background: var(--city-glow-ambient);
+}
+.nb-tagline {
+  display: none;
+} /* element kept: main.js writes into it */
+
+/* ─── Desktop links + sliding indicator ─── */
+.nb-links {
+  position: relative;
+  display: none;
+  align-items: center;
+  gap: 0.1rem;
+  margin-inline: auto;
+  padding: 0.25rem;
+  border-radius: var(--r-full);
+  border: 1px solid var(--city-border);
+  background: color-mix(in srgb, var(--city-text) 3.5%, transparent);
+}
+.nb-link {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--r-full);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--city-text-secondary);
+  transition: color var(--dur-base) ease;
+}
+.nb-link:hover {
+  color: var(--city-text);
+}
+.nb-link.is-active {
+  color: var(--sh-on-brand);
+  font-weight: 800;
+}
+.nb-i {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+}
+.nb-ind {
+  position: absolute;
+  z-index: 0;
+  top: 0.25rem;
+  bottom: 0.25rem;
+  left: 0; /* physical: JS uses offsetLeft, works in RTL too */
+  width: 0;
+  border-radius: var(--r-full);
+  background: var(--sh-grad);
+  background-size: 200% 100%;
+  box-shadow: 0 8px 22px -8px var(--city-glow-strong);
+  opacity: 0;
+  transition:
+    transform 0.5s var(--ease-out-expo),
+    width 0.5s var(--ease-out-expo),
+    opacity var(--dur-base) ease;
+}
+.nb-links.has-active .nb-ind {
+  opacity: 1;
+}
+
+/* ─── Buttons ─── */
+.nb-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-inline-start: auto;
+  flex-shrink: 0;
+}
+.nb-btn {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: var(--r-lg);
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--city-text-secondary);
+  border: 1px solid var(--city-border);
+  background: color-mix(in srgb, var(--city-surface-elevated) 60%, transparent);
+  transition:
+    color var(--dur-base) ease,
+    border-color var(--dur-base) ease,
+    background var(--dur-base) ease,
+    transform var(--dur-fast) var(--ease-out-expo),
+    box-shadow var(--dur-base) ease;
+}
+.nb-btn:hover {
+  color: var(--city-text);
+  border-color: var(--city-border-active);
+  background: color-mix(in srgb, var(--city-surface-elevated) 92%, transparent);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px -10px var(--city-glow-strong);
+}
+.nb-btn:active {
+  transform: scale(0.93);
+}
+.nb-btn[aria-expanded="true"] {
+  color: var(--city-primary);
+  border-color: var(--city-border-active);
+  background: var(--city-glow-ambient);
+}
+.nb-btn--solid,
+.nb-btn--solid:hover {
+  color: var(--sh-on-brand);
+  border-color: transparent;
+  background: var(--sh-grad);
+  background-size: 200% 100%;
+  animation: flowX 4s ease-in-out infinite alternate;
+}
+.nb-btn svg {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+.nb-lbl {
+  display: none;
+} /* ids kept for main.js; icons are self-explanatory */
+
+/* menu icon: three bars → X */
+.nb-burger {
+  display: grid;
+  gap: 4px;
+  width: 1.05rem;
+}
+.nb-burger i {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transition:
+    transform var(--dur-slow) var(--ease-out-expo),
+    opacity var(--dur-fast) ease;
+}
+.nb.menu-open .nb-burger i:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+.nb.menu-open .nb-burger i:nth-child(2) {
+  opacity: 0;
+}
+.nb.menu-open .nb-burger i:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* ─── Search ─── */
+.nb-search {
+  position: relative;
+  min-width: 0;
+}
+#global-city-search-input {
+  padding-inline: 2.6rem 3.6rem;
+}
+
+/* ─── Mobile sheet ─── */
+.nb-panel {
+  pointer-events: auto;
+  position: absolute;
+  inset-inline: 0.5rem;
+  top: calc(100% + 0.35rem);
+  max-width: 80rem;
+  margin-inline: auto;
+  max-height: calc(100dvh - var(--hdr-h) - 0.75rem);
+  overflow-y: auto;
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border-radius: var(--r-2xl);
+  background: var(--city-surface-overlay);
+  border: 1px solid var(--city-border-strong);
+  box-shadow: var(--shadow-xl);
+  backdrop-filter: blur(26px) saturate(170%);
+  -webkit-backdrop-filter: blur(26px) saturate(170%);
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+  transform-origin: top;
+  transition:
+    opacity var(--dur-base) ease,
+    transform var(--dur-slow) var(--ease-out-expo),
+    visibility 0s linear var(--dur-slow);
+}
+.nb.menu-open .nb-panel {
+  visibility: visible;
+  opacity: 1;
+  transform: none;
+  transition-delay: 0s;
+}
+.nb-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.4rem;
+}
+.nb-pl {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 3rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--r-lg);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--city-text-secondary);
+  border: 1px solid var(--city-border);
+  background: color-mix(in srgb, var(--city-text) 4%, transparent);
+  transition:
+    background var(--dur-base) ease,
+    color var(--dur-base) ease,
+    transform var(--dur-fast) ease;
+}
+.nb-pl:active {
+  transform: scale(0.97);
+}
+.nb-pl.is-active {
+  color: var(--sh-on-brand);
+  font-weight: 800;
+  border-color: transparent;
+  background: var(--sh-grad);
+}
+.nb-panel__sep {
+  height: 1px;
+  background: var(--city-border);
+}
+.nb-panel__quick {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.4rem;
+}
+
+/* ─── Breakpoints ─── */
+@media (max-width: 1023.98px) {
+  .nb-search {
+    display: none;
+    order: 10;
+    flex: 1 1 100%;
+  }
+  .nb.search-open .nb-search {
+    display: block;
+    animation: scaleIn var(--dur-base) var(--ease-out-expo);
+  }
+  .nb-d {
+    display: none;
+  }
+  .search-bar__kbd {
+    display: none;
+  }
+}
+@media (min-width: 1024px) {
+  .nb {
+    padding-inline: 1rem;
+  }
+  .nb__bar {
+    flex-wrap: nowrap;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+  }
+  .nb-links {
+    display: inline-flex;
+  }
+  .nb-search {
+    flex: 0 1 13rem;
+    transition: flex-basis 0.45s var(--ease-out-expo);
+  }
+  .nb-search:focus-within {
+    flex-basis: 20rem;
+  }
+  .nb-actions {
+    margin-inline-start: 0;
+  }
+  .nb-m,
+  .nb-panel {
+    display: none;
+  }
+}
+@media (min-width: 1280px) {
+  .nb-badge {
+    display: inline-flex;
+  }
+  .nb-search {
+    flex-basis: 15rem;
+  }
+}
+@media (max-width: 360px) {
+  .nb-name {
+    display: none;
+  }
+}
+
+/* ─── Section reveal: one calm entrance, only where supported ─── */
+@supports (animation-timeline: view()) {
+  @keyframes nbReveal {
+    from {
+      opacity: 0;
+      translate: 0 26px;
+    }
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+  .sh-head,
+  .bento-tile {
+    animation: nbReveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sh-head,
+  .bento-tile {
+    animation: none !important;
+  }
+  .nb-ind,
+  .nb-panel {
+    transition: none !important;
+  }
+}
