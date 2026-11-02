@@ -1,6 +1,6 @@
 /**
  * SHAHRAVA (شهرآوا) — Global City Exploration Platform
- * Main Frontend Application Orchestrator
+ * Main Frontend Application Orchestrator — Final Optimized Edition
  */
 
 import { CITIES, getCityById, resolveCitySafe } from "./data/cities.js";
@@ -10,7 +10,7 @@ import { storage } from "./services/storage.js";
 import { getLang, toggleLang, onLangChange, t } from "./i18n/index.js";
 import { fetchLiveWeather, getWeatherCondition } from "./api/weather.js";
 import { fetchWikiSummary } from "./api/wiki.js";
-import { fetchCountryDetails, pick } from "./api/countries.js";
+import { fetchCountryDetails } from "./api/countries.js";
 import {
   toPersianDigits,
   formatNumber,
@@ -34,14 +34,118 @@ import { CitySearch } from "./components/search.js";
 import { CityComparisonModal } from "./components/comparison.js";
 import { FavoritesDrawer } from "./components/favorites.js";
 
+// ═══════════════════════════════════════════════════════════════
+// Helpers
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Bilingual field picker — handles strings, { fa, en }, null/undefined.
+ * Returns "" for missing values so `|| "—"` fallbacks work cleanly.
+ */
+function pick(val, lang) {
+  if (val === null || val === undefined) return "";
+  if (typeof val === "object" && !Array.isArray(val)) {
+    return val[lang] ?? val.fa ?? val.en ?? "";
+  }
+  return String(val);
+}
+
+/** Minimal HTML escaper for user-influenced strings (OSM countries etc). */
+function escapeHtml(s) {
+  return String(s).replace(
+    /[&<>"']/g,
+    (c) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[c],
+  );
+}
+
+/**
+ * Preserves the `.live-dot` pulse span when updating chip text.
+ * Fixes Bug #4: textContent was wiping out the neon dot.
+ */
+function setChipText(el, text, dotStyle = "") {
+  if (!el) return;
+  const dot = dotStyle
+    ? `<span class="live-dot" style="${dotStyle}"></span>`
+    : `<span class="live-dot"></span>`;
+  el.innerHTML = dot + escapeHtml(text);
+}
+
+/**
+ * Estimates an IANA timezone from longitude (rough but geography-aware).
+ * Fixes the OSM city "UTC" fallback bug.
+ */
+function estimateTimezone(longitude) {
+  const offsetHours = Math.round(longitude / 15);
+  const map = {
+    [-10]: "Pacific/Honolulu",
+    [-9]: "America/Anchorage",
+    [-8]: "America/Los_Angeles",
+    [-7]: "America/Denver",
+    [-6]: "America/Chicago",
+    [-5]: "America/New_York",
+    [-4]: "America/Halifax",
+    [-3]: "America/Sao_Paulo",
+    [-2]: "Atlantic/South_Georgia",
+    [-1]: "Atlantic/Azores",
+    [0]: "Europe/London",
+    [1]: "Europe/Paris",
+    [2]: "Europe/Cairo",
+    [3]: "Asia/Riyadh",
+    [4]: "Asia/Dubai",
+    [5]: "Asia/Karachi",
+    [6]: "Asia/Dhaka",
+    [7]: "Asia/Bangkok",
+    [8]: "Asia/Shanghai",
+    [9]: "Asia/Tokyo",
+    [10]: "Australia/Sydney",
+    [11]: "Pacific/Noumea",
+    [12]: "Pacific/Auckland",
+  };
+  const clamped = Math.max(-10, Math.min(12, offsetHours));
+  return map[clamped] || "UTC";
+}
+
+// ═══════════════════════════════════════════════════════════════
+// Weather atmosphere placeholders (cached once)
+// ═══════════════════════════════════════════════════════════════
+
 const WEATHER_PHOTOS = {
-  rain: createCityPlaceholder("", "#1e3a5f", "#2d4a6b", { width: 1200, height: 600 }),
-  snow: createCityPlaceholder("", "#3a4a5f", "#6a7a8f", { width: 1200, height: 600 }),
-  thunder: createCityPlaceholder("", "#2a2a3a", "#4a4a5a", { width: 1200, height: 600 }),
-  fog: createCityPlaceholder("", "#4a4a4a", "#6a6a6a", { width: 1200, height: 600 }),
-  cloudy: createCityPlaceholder("", "#3a3a4a", "#5a5a6a", { width: 1200, height: 600 }),
-  clear: createCityPlaceholder("", "#4a5a7a", "#8aa0c0", { width: 1200, height: 600 }),
+  rain: createCityPlaceholder("", "#1e3a5f", "#2d4a6b", {
+    width: 1200,
+    height: 600,
+  }),
+  snow: createCityPlaceholder("", "#3a4a5f", "#6a7a8f", {
+    width: 1200,
+    height: 600,
+  }),
+  thunder: createCityPlaceholder("", "#2a2a3a", "#4a4a5a", {
+    width: 1200,
+    height: 600,
+  }),
+  fog: createCityPlaceholder("", "#4a4a4a", "#6a6a6a", {
+    width: 1200,
+    height: 600,
+  }),
+  cloudy: createCityPlaceholder("", "#3a3a4a", "#5a5a6a", {
+    width: 1200,
+    height: 600,
+  }),
+  clear: createCityPlaceholder("", "#4a5a7a", "#8aa0c0", {
+    width: 1200,
+    height: 600,
+  }),
 };
+
+// ═══════════════════════════════════════════════════════════════
+// Main App Class
+// ═══════════════════════════════════════════════════════════════
 
 class ShahravaApp {
   constructor() {
@@ -76,6 +180,10 @@ class ShahravaApp {
     this.attractionSortMode = "default";
     this._lastAttrRenderKey = "";
 
+    // ✅ LRU cache for SVG placeholders (perf optimization)
+    this._placeholderCache = new Map();
+    this._placeholderCacheLimit = 250;
+
     this._onHashChange = () => this.handleHashChange();
     this._onGlobalKeyDown = (e) => this.handleGlobalKeyDown(e);
     this._onBeforeUnload = () => this.destroy();
@@ -89,29 +197,91 @@ class ShahravaApp {
     this.restoreCityFromHash();
 
     this.activeTheme = getCityTheme(
-      this.activeCity.themeId || this.activeCity.id
+      this.activeCity.themeId || this.activeCity.id,
     );
     applyCityTheme(this.activeTheme, this.isDarkMode);
     this.updateThemeButtonVisual();
 
+    this.ensureToastContainer();
     this.initVisualizations();
     this.initInteractiveComponents();
     this.initAttractionToolbarEvents();
     this.initEventListeners();
 
     await this.loadCityData(this.activeCity);
-
     this.renderFeaturedCities();
 
     onLangChange(() => this.handleLanguageChange());
-
     this.updateStaticTranslations();
   }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Toast System (Bug fix: was referenced in CSS but never implemented)
+  // ═══════════════════════════════════════════════════════════════
+
+  ensureToastContainer() {
+    if ($("#toast-container")) return;
+    const container = document.createElement("div");
+    container.id = "toast-container";
+    container.className =
+      "fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 items-center pointer-events-none";
+    container.setAttribute("aria-live", "polite");
+    document.body.appendChild(container);
+  }
+
+  showToast(message, type = "info") {
+    this.ensureToastContainer();
+    const container = $("#toast-container");
+    if (!container) return;
+
+    const toast = document.createElement("div");
+    const colors = {
+      success: "bg-emerald-600 text-white",
+      error: "bg-rose-600 text-white",
+      info: "bg-[var(--city-surface-elevated)] text-[var(--city-text)] border border-[var(--city-border-strong)]",
+    };
+    toast.className = `px-4 py-2.5 rounded-xl text-sm font-bold shadow-2xl backdrop-blur-md ${colors[type] || colors.info}`;
+    toast.textContent = message;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.transition = "opacity 300ms, transform 300ms";
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(10px)";
+      setTimeout(() => toast.remove(), 320);
+    }, 2400);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Placeholder Cache (perf: prevents rebuilding SVGs every render)
+  // ═══════════════════════════════════════════════════════════════
+
+  _getPlaceholder(name, primary, secondary, width, height) {
+    const key = `${name}|${primary}|${secondary}|${width}x${height}`;
+    if (this._placeholderCache.has(key)) {
+      return this._placeholderCache.get(key);
+    }
+    // LRU eviction
+    if (this._placeholderCache.size >= this._placeholderCacheLimit) {
+      const firstKey = this._placeholderCache.keys().next().value;
+      this._placeholderCache.delete(firstKey);
+    }
+    const svg = createCityPlaceholder(name, primary, secondary, {
+      width,
+      height,
+    });
+    this._placeholderCache.set(key, svg);
+    return svg;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Routing
+  // ═══════════════════════════════════════════════════════════════
 
   restoreCityFromHash() {
     const hash = window.location.hash;
     if (!hash.startsWith("#city=")) return;
-
     const cityId = hash.replace("#city=", "").toLowerCase();
     this.activeCity = resolveCitySafe(cityId);
   }
@@ -127,8 +297,12 @@ class ShahravaApp {
     await this.applyCity(targetCity, false);
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // Global Keyboard (Ctrl+K focus, Escape to close)
+  // ═══════════════════════════════════════════════════════════════
+
   handleGlobalKeyDown(e) {
-    // BUG 15 fix: Ctrl+K or Cmd+K focuses global search
+    // Ctrl/Cmd + K → focus global search
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
       e.preventDefault();
       const searchInput = $("#global-city-search-input");
@@ -136,8 +310,42 @@ class ShahravaApp {
         searchInput.focus();
         searchInput.select();
       }
+      return;
+    }
+
+    // Escape → close any open overlay
+    if (e.key === "Escape") {
+      let handled = false;
+
+      if (
+        this.comparisonModal?.modal &&
+        !this.comparisonModal.modal.classList.contains("hidden")
+      ) {
+        this.comparisonModal.hide();
+        handled = true;
+      }
+
+      if (
+        this.favoritesDrawer?.drawer &&
+        !this.favoritesDrawer.drawer.classList.contains("hidden")
+      ) {
+        this.favoritesDrawer.hide();
+        handled = true;
+      }
+
+      const searchDropdown = $("#search-results-dropdown");
+      if (searchDropdown && !searchDropdown.classList.contains("hidden")) {
+        searchDropdown.classList.add("hidden");
+        handled = true;
+      }
+
+      if (handled) e.preventDefault();
     }
   }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Init
+  // ═══════════════════════════════════════════════════════════════
 
   initVisualizations() {
     const climateEl = $("#climate-chart-container");
@@ -165,7 +373,7 @@ class ShahravaApp {
           } else if (selected.osmData) {
             this.loadDynamicOsmCity(selected);
           }
-        }
+        },
       );
     }
 
@@ -189,7 +397,10 @@ class ShahravaApp {
       const debouncedSearch = debounce((query) => {
         this.attractionSearchQuery = query.trim();
         if (clearBtn) {
-          clearBtn.classList.toggle("hidden", this.attractionSearchQuery.length === 0);
+          clearBtn.classList.toggle(
+            "hidden",
+            this.attractionSearchQuery.length === 0,
+          );
         }
         this.renderAttractionsGrid();
         this.updateAttractionResetBtnState();
@@ -211,11 +422,9 @@ class ShahravaApp {
     }
 
     if (sortSelect) {
-      // Store initial Persian text if not already stored (BUG 1 fix)
+      // Store initial Persian text (Bug 1 fix)
       Array.from(sortSelect.options).forEach((opt) => {
-        if (!opt.dataset.fa) {
-          opt.dataset.fa = opt.textContent;
-        }
+        if (!opt.dataset.fa) opt.dataset.fa = opt.textContent;
       });
 
       sortSelect.addEventListener("change", (e) => {
@@ -258,7 +467,7 @@ class ShahravaApp {
           soundBtn.classList.add(
             "border-emerald-500",
             "text-emerald-400",
-            "bg-emerald-500/10"
+            "bg-emerald-500/10",
           );
           if (wave) wave.classList.add("animate-pulse");
           if (text)
@@ -267,7 +476,7 @@ class ShahravaApp {
           soundBtn.classList.remove(
             "border-emerald-500",
             "text-emerald-400",
-            "bg-emerald-500/10"
+            "bg-emerald-500/10",
           );
           if (wave) wave.classList.remove("animate-pulse");
           if (text) text.textContent = t("nav.sound", "اتمسفر صوتی");
@@ -280,24 +489,33 @@ class ShahravaApp {
       favBtn.addEventListener("click", () => {
         const isFav = storage.toggleFavorite(this.activeCity.id);
         this.updateFavoriteButtonVisual(isFav);
+        this.showToast(
+          isFav
+            ? getLang() === "fa"
+              ? "به علاقه‌مندی‌ها اضافه شد"
+              : "Added to favorites"
+            : getLang() === "fa"
+              ? "از علاقه‌مندی‌ها حذف شد"
+              : "Removed from favorites",
+          isFav ? "success" : "info",
+        );
       });
     }
 
     const openFavsBtn = $("#open-favorites-drawer-btn");
-    if (openFavsBtn) {
+    if (openFavsBtn)
       openFavsBtn.addEventListener("click", () => this.favoritesDrawer?.show());
-    }
 
     const openCompareNavBtn = $("#nav-compare-btn");
     if (openCompareNavBtn) {
       openCompareNavBtn.addEventListener("click", () =>
-        this.comparisonModal?.show(this.activeCity.id)
+        this.comparisonModal?.show(this.activeCity.id),
       );
     }
     const heroCompareBtn = $("#hero-compare-btn");
     if (heroCompareBtn) {
       heroCompareBtn.addEventListener("click", () =>
-        this.comparisonModal?.show(this.activeCity.id)
+        this.comparisonModal?.show(this.activeCity.id),
       );
     }
 
@@ -314,14 +532,46 @@ class ShahravaApp {
     $$(".continent-filter-pill").forEach((btn) => {
       btn.addEventListener("click", () => {
         $$(".continent-filter-pill").forEach((b) =>
-          b.classList.remove("active-filter")
+          b.classList.remove("active-filter"),
         );
         btn.classList.add("active-filter");
         this.activeContinent = btn.getAttribute("data-continent");
         this.renderFeaturedCities();
       });
     });
+
+    // ✅ Event delegation — pin-on-map (avoids re-binding every render)
+    const attractionsGrid = $("#attractions-cards-grid");
+    if (attractionsGrid) {
+      attractionsGrid.addEventListener("click", (e) => {
+        const btn = e.target.closest(".pin-on-map-btn");
+        if (!btn) return;
+        const id = btn.getAttribute("data-attraction-id");
+        const attr = (this.activeCity.attractions || []).find(
+          (a) => a.id === id,
+        );
+        if (!attr || !this.cityMap) return;
+        const mapEl = $("#map-section");
+        if (mapEl) mapEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        setTimeout(() => this.cityMap.panToAttraction(attr), 600);
+      });
+    }
+
+    // ✅ Event delegation — featured cards
+    const featuredGrid = $("#featured-cities-grid");
+    if (featuredGrid) {
+      featuredGrid.addEventListener("click", (e) => {
+        const card = e.target.closest(".featured-city-card");
+        if (!card) return;
+        const id = card.getAttribute("data-city-id");
+        this.switchCity(id);
+      });
+    }
   }
+
+  // ═══════════════════════════════════════════════════════════════
+  // City Switching
+  // ═══════════════════════════════════════════════════════════════
 
   async switchCity(cityId, updateHash = true) {
     const city = resolveCitySafe(cityId);
@@ -350,16 +600,22 @@ class ShahravaApp {
       area: 450,
       elevation: 50,
       density: 3300,
-      timezone: "UTC",
+      // ✅ FIX: estimate timezone from longitude instead of hard "UTC"
+      timezone: estimateTimezone(lon),
       themeId: displayName,
-      heroImage: createCityPlaceholder(
+      heroImage: this._getPlaceholder(
         displayName,
         dynamicTheme.primary,
         dynamicTheme.secondary,
-        { width: 2400, height: 1400 }
+        2400,
+        1400,
       ),
-      overviewFa: osmItem.osmData?.fullName || "",
-      overviewEn: osmItem.osmData?.fullName || "",
+      overviewFa:
+        osmItem.osmData?.fullName ||
+        `کلان‌شهری در مختصات ${lat.toFixed(2)}°، ${lon.toFixed(2)}°`,
+      overviewEn:
+        osmItem.osmData?.fullName ||
+        `Global metropolitan at coordinates ${lat.toFixed(2)}°, ${lon.toFixed(2)}°`,
       climate: {
         highs: [12, 14, 18, 22, 26, 30, 32, 31, 28, 22, 16, 12],
         lows: [4, 5, 8, 12, 16, 20, 22, 21, 18, 13, 8, 4],
@@ -377,7 +633,7 @@ class ShahravaApp {
     try {
       sessionStorage.setItem(
         `shahrava_osm_${dynamicCity.id}`,
-        JSON.stringify(dynamicCity)
+        JSON.stringify(dynamicCity),
       );
     } catch (err) {
       console.warn("Could not persist OSM city to sessionStorage:", err);
@@ -387,27 +643,38 @@ class ShahravaApp {
   }
 
   async applyCity(city, updateHash) {
+    if (!city) return;
     this.activeCity = city;
     this.activeTheme = getCityTheme(city.themeId || city.id);
 
     applyCityTheme(this.activeTheme, this.isDarkMode);
 
-    this.resetAllAttractionFilters();
+    // ✅ FIX: only reset state here — loadCityData handles the render
+    // (was double-rendering attractions on every switch)
+    this._resetAttractionState();
 
-    if (updateHash) {
-      window.location.hash = `#city=${city.id}`;
-    }
+    if (updateHash) window.location.hash = `#city=${city.id}`;
 
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    const scrollBehavior = matchMedia("(prefers-reduced-motion: reduce)")
+      .matches
+      ? "auto"
+      : "smooth";
+    window.scrollTo({ top: 0, behavior: scrollBehavior });
 
     await this.loadCityData(city);
     this.renderFeaturedCities();
   }
 
-  resetAllAttractionFilters() {
+  // ═══════════════════════════════════════════════════════════════
+  // Attraction Filter State Management
+  // ═══════════════════════════════════════════════════════════════
+
+  /** ✅ Only resets state — no render. Used by applyCity before loadCityData. */
+  _resetAttractionState() {
     this.activeAttractionCategory = "all";
     this.attractionSearchQuery = "";
     this.attractionSortMode = "default";
+    this._lastAttrRenderKey = "";
 
     const searchInput = $("#attraction-search-input");
     const clearBtn = $("#attraction-search-clear");
@@ -416,7 +683,11 @@ class ShahravaApp {
     if (searchInput) searchInput.value = "";
     if (clearBtn) clearBtn.classList.add("hidden");
     if (sortSelect) sortSelect.value = "default";
+  }
 
+  /** ✅ Reset + re-render. Used by the reset button. */
+  resetAllAttractionFilters() {
+    this._resetAttractionState();
     this.renderAttractionCategoryPills();
     this.renderAttractionsGrid();
     this.updateAttractionResetBtnState();
@@ -432,6 +703,10 @@ class ShahravaApp {
       this.attractionSortMode !== "default";
     resetBtn.classList.toggle("hidden", !isFiltered);
   }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Load City Data (weather + wiki + country)
+  // ═══════════════════════════════════════════════════════════════
 
   async loadCityData(city) {
     const token = ++this.loadToken;
@@ -461,6 +736,7 @@ class ShahravaApp {
 
     this.renderAttractionCategoryPills();
     this.renderAttractionsGrid();
+    this.updateAttractionResetBtnState();
 
     const [weather, wiki, country] = await Promise.all([
       fetchLiveWeather(lat, lon).catch((err) => {
@@ -469,7 +745,7 @@ class ShahravaApp {
       }),
       fetchWikiSummary(
         getLang() === "fa" ? city.nameFa : city.nameEn,
-        getLang()
+        getLang(),
       ).catch((err) => {
         console.warn("[wiki] fetch failed:", err);
         return null;
@@ -497,6 +773,10 @@ class ShahravaApp {
     this.renderCountryDetails();
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // Hero Section
+  // ═══════════════════════════════════════════════════════════════
+
   renderHeroSection() {
     const lang = getLang();
     const city = this.activeCity;
@@ -511,17 +791,21 @@ class ShahravaApp {
     const motifDesc = $("#city-motif-description");
 
     if (heroTitle) heroTitle.textContent = name;
+
+    // ✅ FIX #4: preserve .live-dot on hero country chip
     if (heroCountry) {
-      heroCountry.innerHTML = `<span class="live-dot" style="background: var(--sh-on-brand)"></span>${country}`;
+      setChipText(heroCountry, country, "background: var(--sh-on-brand)");
     }
+
     if (heroTagline) heroTagline.textContent = tagline;
 
     if (heroBgImg) {
-      const placeholder = createCityPlaceholder(
+      const placeholder = this._getPlaceholder(
         name,
         this.activeTheme.primary,
         this.activeTheme.secondary,
-        { width: 2400, height: 1400 }
+        2400,
+        1400,
       );
       heroBgImg.src = placeholder;
       heroBgImg.alt = `${name} — ${country}`;
@@ -567,7 +851,7 @@ class ShahravaApp {
       coordEl.textContent = formatCoordinates(
         city.coordinates[0],
         city.coordinates[1],
-        lang
+        lang,
       );
   }
 
@@ -593,7 +877,7 @@ class ShahravaApp {
     if (badgeTemp)
       badgeTemp.textContent = formatTemperature(
         this.liveWeather.temperature,
-        lang
+        lang,
       );
     if (badgeDesc) badgeDesc.textContent = cond.description;
   }
@@ -778,7 +1062,7 @@ class ShahravaApp {
       flagEl.classList.remove("hidden");
     }
 
-    // BUG 3 fix: country data fields are bilingual {fa, en} shape
+    // ✅ Bilingual via pick(); empty strings fall through to em-dash
     if (capEl) capEl.textContent = pick(data.capital, lang) || "—";
     if (currEl) currEl.textContent = pick(data.currency, lang) || "—";
     if (regEl) {
@@ -788,6 +1072,10 @@ class ShahravaApp {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // Attraction Category Pills
+  // ═══════════════════════════════════════════════════════════════
+
   renderAttractionCategoryPills() {
     const container = $("#attraction-category-pills");
     if (!container) return;
@@ -795,7 +1083,6 @@ class ShahravaApp {
     const lang = getLang();
     const attractions = this.activeCity.attractions || [];
 
-    // Tally counts per category dynamically from real data
     const categoryCounts = {};
     const categoryLabels = {};
 
@@ -811,7 +1098,8 @@ class ShahravaApp {
     });
 
     const totalCount = attractions.length;
-    const allCountBadge = lang === "fa" ? toPersianDigits(totalCount) : totalCount;
+    const allCountBadge =
+      lang === "fa" ? toPersianDigits(totalCount) : totalCount;
     const allLabel = lang === "fa" ? "همه جاذبه‌ها" : "All Attractions";
 
     const allPill = `
@@ -821,28 +1109,29 @@ class ShahravaApp {
       </button>
     `;
 
-    const categoryPills = Object.keys(categoryCounts).map((cat) => {
-      const count = categoryCounts[cat];
-      const countBadge = lang === "fa" ? toPersianDigits(count) : count;
-      const label = categoryLabels[cat] || cat;
-      const isActive = this.activeAttractionCategory === cat;
+    const categoryPills = Object.keys(categoryCounts)
+      .map((cat) => {
+        const count = categoryCounts[cat];
+        const countBadge = lang === "fa" ? toPersianDigits(count) : count;
+        const label = categoryLabels[cat] || cat;
+        const isActive = this.activeAttractionCategory === cat;
 
-      return `
-        <button type="button" data-category="${cat}" class="attraction-category-pill ${isActive ? "active-category-filter" : ""}">
-          <span>${label}</span>
-          <span class="pill-count">${countBadge}</span>
-        </button>
-      `;
-    }).join("");
+        return `
+          <button type="button" data-category="${cat}" class="attraction-category-pill ${isActive ? "active-category-filter" : ""}">
+            <span>${label}</span>
+            <span class="pill-count">${countBadge}</span>
+          </button>
+        `;
+      })
+      .join("");
 
     container.innerHTML = allPill + categoryPills;
 
-    // Attach click listeners to pills
     container.querySelectorAll(".attraction-category-pill").forEach((btn) => {
       btn.addEventListener("click", () => {
-        container.querySelectorAll(".attraction-category-pill").forEach((b) =>
-          b.classList.remove("active-category-filter")
-        );
+        container
+          .querySelectorAll(".attraction-category-pill")
+          .forEach((b) => b.classList.remove("active-category-filter"));
         btn.classList.add("active-category-filter");
         this.activeAttractionCategory = btn.getAttribute("data-category");
         this.renderAttractionsGrid();
@@ -863,6 +1152,10 @@ class ShahravaApp {
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // Attractions Grid
+  // ═══════════════════════════════════════════════════════════════
+
   renderAttractionsGrid() {
     const container = $("#attractions-cards-grid");
     if (!container) return;
@@ -871,57 +1164,55 @@ class ShahravaApp {
     const city = this.activeCity;
     const allAttractions = city.attractions || [];
 
-    // Filter by category
     let list =
       this.activeAttractionCategory === "all"
         ? allAttractions
-        : allAttractions.filter((a) => a.category === this.activeAttractionCategory);
+        : allAttractions.filter(
+            (a) => a.category === this.activeAttractionCategory,
+          );
 
-    // Filter by live search query
     if (this.attractionSearchQuery) {
       const q = this.attractionSearchQuery.toLowerCase();
       list = list.filter((a) => {
-        const nameF = (a.nameFa || "").toLowerCase();
-        const nameE = (a.nameEn || "").toLowerCase();
-        const descF = (a.descFa || "").toLowerCase();
-        const descE = (a.descEn || "").toLowerCase();
-        const catF = (a.categoryFa || "").toLowerCase();
-        const catE = (a.categoryEn || a.category || "").toLowerCase();
-        return (
-          nameF.includes(q) ||
-          nameE.includes(q) ||
-          descF.includes(q) ||
-          descE.includes(q) ||
-          catF.includes(q) ||
-          catE.includes(q)
-        );
+        const fields = [
+          a.nameFa,
+          a.nameEn,
+          a.descFa,
+          a.descEn,
+          a.categoryFa,
+          a.categoryEn,
+          a.category,
+        ];
+        return fields.some((f) => (f || "").toLowerCase().includes(q));
       });
     }
 
-    // Sort mode
+    const collator = new Intl.Collator(lang === "fa" ? "fa" : "en", {
+      sensitivity: "base",
+    });
     if (this.attractionSortMode === "name-asc") {
-      list = [...list].sort((a, b) => {
-        const nameA = lang === "fa" ? a.nameFa : a.nameEn;
-        const nameB = lang === "fa" ? b.nameFa : b.nameEn;
-        return nameA.localeCompare(nameB, lang === "fa" ? "fa" : "en");
-      });
+      list = [...list].sort((a, b) =>
+        collator.compare(
+          lang === "fa" ? a.nameFa : a.nameEn,
+          lang === "fa" ? b.nameFa : b.nameEn,
+        ),
+      );
     } else if (this.attractionSortMode === "name-desc") {
-      list = [...list].sort((a, b) => {
-        const nameA = lang === "fa" ? a.nameFa : a.nameEn;
-        const nameB = lang === "fa" ? b.nameFa : b.nameEn;
-        return nameB.localeCompare(nameA, lang === "fa" ? "fa" : "en");
-      });
+      list = [...list].sort((a, b) =>
+        collator.compare(
+          lang === "fa" ? b.nameFa : b.nameEn,
+          lang === "fa" ? a.nameFa : a.nameEn,
+        ),
+      );
     } else if (this.attractionSortMode === "category") {
-      list = [...list].sort((a, b) => {
-        const catA = a.category || "";
-        const catB = b.category || "";
-        return catA.localeCompare(catB);
-      });
+      list = [...list].sort((a, b) =>
+        collator.compare(a.category || "", b.category || ""),
+      );
     }
 
     this.updateAttractionResultCount(list.length, allAttractions.length);
 
-    // BUG 8 fix: Only apply stagger animation when city, category or sort changes, NOT on every keystroke
+    // ✅ Only stagger when city/category/sort changes, not every keystroke
     const currentRenderKey = `${city.id}|${this.activeAttractionCategory}|${this.attractionSortMode}`;
     const shouldAnimate = this._lastAttrRenderKey !== currentRenderKey;
     this._lastAttrRenderKey = currentRenderKey;
@@ -948,38 +1239,39 @@ class ShahravaApp {
             ? attr.categoryFa || "جاذبه"
             : attr.categoryEn || attr.category || "Landmark";
 
-        // BUG 4 fix: yearBuilt is bilingual {fa, en}
+        // ✅ yearBuilt is bilingual {fa, en}
         const yearBuiltStr = pick(attr.yearBuilt, lang);
 
-        const placeholder = createCityPlaceholder(
+        const placeholder = this._getPlaceholder(
           name,
           this.activeTheme.primary,
           this.activeTheme.secondary,
-          { width: 800, height: 600 }
+          800,
+          600,
         );
 
-        // BUG 10 fix: only include data-external-src when image exists and is non-empty
-        const externalSrcAttr = attr.image && attr.image.trim().length > 0
-          ? `data-external-src="${attr.image}"`
-          : "";
+        const externalSrcAttr =
+          attr.image && attr.image.trim().length > 0
+            ? `data-external-src="${attr.image}"`
+            : "";
 
-        const animDelay = shouldAnimate
+        const animStyle = shouldAnimate
           ? `style="animation-delay: ${Math.min(idx * 40, 400)}ms"`
-          : `style="animation: none"`;
+          : `style="animation:none"`;
 
         return `
-          <article class="attraction-card obsidian-card group relative overflow-hidden rounded-3xl flex flex-col" ${animDelay}>
+          <article class="attraction-card obsidian-card group relative overflow-hidden rounded-3xl flex flex-col" ${animStyle}>
             <div class="relative h-52 overflow-hidden">
-              <img src="${placeholder}" ${externalSrcAttr} alt="${name}" loading="lazy" decoding="async" class="cinematic-img w-full h-full object-cover"/>
+              <img src="${placeholder}" ${externalSrcAttr} alt="${escapeHtml(name)}" loading="lazy" decoding="async" width="800" height="600" class="cinematic-img w-full h-full object-cover"/>
               <div class="absolute inset-0 bg-gradient-to-t from-[var(--city-surface)] via-[var(--city-surface)]/40 to-transparent pointer-events-none"></div>
               <span class="absolute top-3.5 right-3.5 px-3 py-1 rounded-full text-[10px] font-black shadow-xl backdrop-blur-md" style="background:${this.activeTheme.primary}; color:#070C11">
-                ${catLabel}
+                ${escapeHtml(catLabel)}
               </span>
-              ${yearBuiltStr ? `<span class="absolute bottom-3 right-3.5 text-[10px] text-white/90 font-semibold bg-black/55 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-sm">${yearBuiltStr}</span>` : ""}
+              ${yearBuiltStr ? `<span class="absolute bottom-3 right-3.5 text-[10px] text-white/90 font-semibold bg-black/55 px-2 py-0.5 rounded-md border border-white/10 backdrop-blur-sm">${escapeHtml(yearBuiltStr)}</span>` : ""}
             </div>
             <div class="p-5 flex-1 flex flex-col">
-              <h4 class="font-bold text-base text-[var(--city-text)] mb-2 group-hover:text-[var(--city-primary)] transition-colors duration-300">${name}</h4>
-              <p class="text-xs text-[var(--city-text-secondary)] leading-relaxed line-clamp-3 flex-1">${desc}</p>
+              <h4 class="font-bold text-base text-[var(--city-text)] mb-2 group-hover:text-[var(--city-primary)] transition-colors duration-300">${escapeHtml(name)}</h4>
+              <p class="text-xs text-[var(--city-text-secondary)] leading-relaxed line-clamp-3 flex-1">${escapeHtml(desc)}</p>
             </div>
             <div class="p-5 pt-0">
               <button type="button" data-attraction-id="${attr.id}" class="pin-on-map-btn w-full py-2.5 px-4 rounded-xl bg-[var(--city-surface-elevated)] hover:bg-[var(--city-primary)]/10 border border-[var(--city-border)] hover:border-[var(--city-primary)] text-xs text-[var(--city-text)] font-semibold flex items-center justify-center gap-2 transition-all duration-300">
@@ -995,18 +1287,12 @@ class ShahravaApp {
       .join("");
 
     setupProgressiveImages(container);
-
-    container.querySelectorAll(".pin-on-map-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = btn.getAttribute("data-attraction-id");
-        const attr = allAttractions.find((a) => a.id === id);
-        if (!attr || !this.cityMap) return;
-        const mapEl = $("#map-section");
-        if (mapEl) mapEl.scrollIntoView({ behavior: "smooth" });
-        setTimeout(() => this.cityMap.panToAttraction(attr), 600);
-      });
-    });
+    // ✅ pin-on-map click is handled by event delegation in initEventListeners
   }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Featured Cities
+  // ═══════════════════════════════════════════════════════════════
 
   renderFeaturedCities() {
     const container = $("#featured-cities-grid");
@@ -1026,30 +1312,32 @@ class ShahravaApp {
         const tagline = lang === "fa" ? city.taglineFa : city.taglineEn;
         const isActive = city.id === this.activeCity.id;
 
-        const placeholder = createCityPlaceholder(
+        const placeholder = this._getPlaceholder(
           name,
           theme.primary,
           theme.secondary,
-          { width: 600, height: 400 }
+          600,
+          400,
         );
 
-        const externalSrcAttr = city.heroImage && city.heroImage.trim().length > 0
-          ? `data-external-src="${city.heroImage}"`
-          : "";
+        const externalSrcAttr =
+          city.heroImage && city.heroImage.trim().length > 0
+            ? `data-external-src="${city.heroImage}"`
+            : "";
 
         return `
           <article data-city-id="${city.id}" class="featured-city-card obsidian-card group relative cursor-pointer overflow-hidden rounded-3xl ${isActive ? "ring-2 ring-[var(--city-primary)] shadow-[0_0_44px_-8px_var(--city-glow-strong)]" : ""} flex flex-col justify-end p-6 min-h-[300px]">
-            <img src="${placeholder}" ${externalSrcAttr} alt="${name}" loading="lazy" decoding="async" class="cinematic-img absolute inset-0 w-full h-full object-cover opacity-70"/>
+            <img src="${placeholder}" ${externalSrcAttr} alt="${escapeHtml(name)}" loading="lazy" decoding="async" width="600" height="400" class="cinematic-img absolute inset-0 w-full h-full object-cover opacity-70"/>
             <div class="absolute inset-0 bg-gradient-to-t from-[var(--city-bg)] via-[var(--city-bg)]/55 to-transparent pointer-events-none"></div>
             <div class="relative z-10 space-y-2.5">
               <div class="flex items-center justify-between">
                 <span class="px-3 py-1 rounded-full text-[10px] font-black shadow-lg backdrop-blur-md" style="background:${theme.primary}; color:#070C11">
-                  ${country}
+                  ${escapeHtml(country)}
                 </span>
                 <span class="w-2.5 h-2.5 rounded-full border-2 border-white/70 shadow-[0_0_10px_var(--city-glow-strong)]" style="background:${theme.secondary}"></span>
               </div>
-              <h3 class="font-black text-2xl text-[var(--city-text)] group-hover:text-[var(--city-primary)] transition-colors duration-300 tracking-tight drop-shadow-lg">${name}</h3>
-              <p class="text-xs text-[var(--city-text-secondary)] line-clamp-1">${tagline}</p>
+              <h3 class="font-black text-2xl text-[var(--city-text)] group-hover:text-[var(--city-primary)] transition-colors duration-300 tracking-tight drop-shadow-lg">${escapeHtml(name)}</h3>
+              <p class="text-xs text-[var(--city-text-secondary)] line-clamp-1">${escapeHtml(tagline)}</p>
               <div class="flex items-center justify-between text-xs pt-2.5 border-t border-[var(--city-border)]">
                 <span class="text-[var(--city-muted)]">${t("hero.population", "جمعیت")}: <strong class="text-[var(--city-text)]">${formatNumber(city.population, lang)}</strong></span>
                 <span class="text-[var(--city-primary)] font-bold group-hover:-translate-x-1 transition-transform duration-300">←</span>
@@ -1062,14 +1350,12 @@ class ShahravaApp {
       .join("");
 
     setupProgressiveImages(container);
-
-    container.querySelectorAll(".featured-city-card").forEach((card) => {
-      card.addEventListener("click", () => {
-        const id = card.getAttribute("data-city-id");
-        this.switchCity(id);
-      });
-    });
+    // ✅ featured-card click is handled by event delegation in initEventListeners
   }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Visual Button States
+  // ═══════════════════════════════════════════════════════════════
 
   updateFavoriteButtonVisual(isFav) {
     const favBtn = $("#hero-favorite-btn");
@@ -1081,7 +1367,7 @@ class ShahravaApp {
       favBtn.classList.add(
         "bg-rose-500/20",
         "border-rose-500/50",
-        "text-rose-400"
+        "text-rose-400",
       );
       favBtn.classList.remove("bg-white/10", "border-white/20", "text-white");
       if (favIcon) favIcon.setAttribute("fill", "currentColor");
@@ -1091,7 +1377,7 @@ class ShahravaApp {
       favBtn.classList.remove(
         "bg-rose-500/20",
         "border-rose-500/50",
-        "text-rose-400"
+        "text-rose-400",
       );
       favBtn.classList.add("bg-white/10", "border-white/20", "text-white");
       if (favIcon) favIcon.setAttribute("fill", "none");
@@ -1102,11 +1388,14 @@ class ShahravaApp {
   updateThemeButtonVisual() {
     const icon = $("#theme-mode-icon");
     if (!icon) return;
-
     icon.innerHTML = this.isDarkMode
       ? `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>`
       : `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>`;
   }
+
+  // ═══════════════════════════════════════════════════════════════
+  // Language
+  // ═══════════════════════════════════════════════════════════════
 
   handleLanguageChange() {
     this.updateStaticTranslations();
@@ -1131,29 +1420,28 @@ class ShahravaApp {
   updateStaticTranslations() {
     const lang = getLang();
 
-    // BUG 6 fix: document.title bilingual
     document.title =
       lang === "fa"
         ? "شهرآوا | کاوشگر هوشمند شهرهای جهان"
         : "Shahrava | Global City Exploration";
 
-    // BUG 14 fix: meta description bilingual
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute(
         "content",
         lang === "fa"
           ? "شهرآوا (SHAHRAVA) - پلتفرمی برای کاوش دیداری، جغرافیایی و آماری شهرهای جهان با هویت بصری پویا، نمودارهای تعاملی و اطلاعات آب‌وهوا و نقشه."
-          : "Shahrava - A global city exploration platform with dynamic visual identities, interactive D3 charts, live weather, and maps."
+          : "Shahrava - A global city exploration platform with dynamic visual identities, interactive D3 charts, live weather, and maps.",
       );
     }
 
-    // BUG 1 fix: sort select options preserve Persian label
+    // ✅ Sort select — preserve Persian labels
     const sortSelect = $("#attraction-sort-select");
     if (sortSelect) {
       Array.from(sortSelect.options).forEach((opt) => {
         if (!opt.dataset.fa) opt.dataset.fa = opt.textContent;
-        opt.textContent = lang === "fa" ? opt.dataset.fa : (opt.dataset.en || opt.dataset.fa);
+        opt.textContent =
+          lang === "fa" ? opt.dataset.fa : opt.dataset.en || opt.dataset.fa;
       });
     }
 
@@ -1189,8 +1477,10 @@ class ShahravaApp {
     const weatherTitle = $("#weather-section-title");
     const weatherLiveBadge = $("#weather-live-badge");
     if (weatherTitle) weatherTitle.textContent = t("weather.title");
+
+    // ✅ FIX #4: preserve .live-dot in weather live badge
     if (weatherLiveBadge)
-      weatherLiveBadge.textContent = t("weather.liveDataBadge");
+      setChipText(weatherLiveBadge, t("weather.liveDataBadge"));
 
     const climateTitle = $("#climate-chart-title");
     const climateSub = $("#climate-chart-subtitle");
@@ -1204,7 +1494,9 @@ class ShahravaApp {
       climateSub.textContent = t("visualizations.climateSubtitle");
     if (popTitle) popTitle.textContent = t("visualizations.populationTitle");
     if (popSub) popSub.textContent = t("visualizations.populationSubtitle");
-    if (globeTitle) globeTitle.textContent = t("visualizations.globeTitle");
+
+    // ✅ FIX #4: preserve .live-dot in globe title
+    if (globeTitle) setChipText(globeTitle, t("visualizations.globeTitle"));
     if (globeSub) globeSub.textContent = t("visualizations.globeSubtitle");
 
     const attrTitle = $("#attractions-section-title");
@@ -1282,7 +1574,7 @@ class ShahravaApp {
     if (this.populationChart)
       this.populationChart.render(
         this.activeCity.populationHistory,
-        this.activeTheme
+        this.activeTheme,
       );
     if (this.globeViz)
       this.globeViz.render(this.activeCity.coordinates, this.activeTheme);
@@ -1297,11 +1589,16 @@ class ShahravaApp {
     this.climateChart?.destroy?.();
     this.populationChart?.destroy?.();
     this.globeViz?.destroy?.();
+    this._placeholderCache?.clear();
   }
 }
 
-// BUG 11 fix: HMR dispose registration
+// ═══════════════════════════════════════════════════════════════
+// Bootstrap
+// ═══════════════════════════════════════════════════════════════
+
 let appInstance = null;
+
 document.addEventListener("DOMContentLoaded", () => {
   appInstance = new ShahravaApp();
   appInstance

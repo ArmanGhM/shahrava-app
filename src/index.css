@@ -2550,3 +2550,46 @@ html:not(.dark) #favorites-drawer {
     flex: none;
   }
 }
+/* ══════════════════════════════════════════════════════════════
+   GLOBE — Mobile touch & performance optimization
+   ══════════════════════════════════════════════════════════════ */
+
+#globe-viz-container {
+  touch-action: none; /* اجازه چرخش کره با انگشت، بدون اسکرول صفحه */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#globe-viz-container svg {
+  will-change: transform;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 640px) {
+  /* کاهش انیمیشن‌های سنگین روی موبایل */
+  .animate-float {
+    animation: none !important;
+  }
+
+  .animate-ping {
+    animation-duration: 2.4s !important;
+  }
+
+  /* Aurora سبک‌تر روی موبایل */
+  .aurora i {
+    filter: blur(60px) !important;
+    opacity: 0.25 !important;
+  }
+
+  .hero-orb {
+    filter: blur(48px) !important;
+    opacity: 0.2 !important;
+  }
+
+  /* کاهش shadow های سنگین */
+  .obsidian-card:hover {
+    box-shadow: var(--shadow-md) !important;
+    transform: none !important;
+  }
+}

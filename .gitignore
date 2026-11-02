@@ -1,8 +1,55 @@
-﻿node_modules
-dist
+﻿# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+dist-ssr/
+*.local
+
+# Vite cache
+.vite/
+node_modules/.vite/
+node_modules/.cache/
+
+# Test & coverage
+coverage/
+.nyc_output/
+
+# Environment files
 .env
 .env.local
+.env.*.local
+
+# Editor files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
 .DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
 *.log
-.vscode
-.idea
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Temp files
+*.tmp
+*.temp
+.tmp/
+
+# TypeScript
+*.tsbuildinfo
+
+# Optional: don't ignore the land data (needed at runtime)
+# src/data/land-110m.json
